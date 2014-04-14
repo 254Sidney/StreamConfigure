@@ -13,14 +13,16 @@ public class CommonState implements State {
 			parserCfg.classify(line);
 
 		} else if (line.startsWith(String.valueOf("</Feed"))) {
-			throw new IllegalStateException(String.valueOf("Error config format"));
+			throw new IllegalStateException(
+					String.valueOf("Error config format"));
 
 		} else if (line.startsWith(String.valueOf("<Stream"))) {
 			parserCfg.setState(parserCfg.getStreamState());
 			parserCfg.classify(line);
 
 		} else if (line.startsWith(String.valueOf("</Strem"))) {
-			throw new IllegalStateException(String.valueOf("Error config format"));
+			throw new IllegalStateException(
+					String.valueOf("Error config format"));
 
 		} else {
 			String[] str = line.split("\\s+");

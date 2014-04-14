@@ -1,19 +1,11 @@
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import javax.swing.text.html.HTMLEditorKit.Parser;
 
 class Common {
 	private Map<String, String> commonVal;
@@ -99,21 +91,23 @@ class FfCfg {
 	}
 
 	public void printCfg() {
-		System.out.println("Common===========================================");
+		System.out.println("====================Common=======================");
 		commonCfg.print();
 
-		System.out.println("Feed=============================================");
+		System.out.println("====================Feed=========================");
 		Set<Entry<String, Feed>> feedSets = feeds.entrySet();
 		for (Entry<String, Feed> entry : feedSets) {
-			System.out.println(entry.getKey() + " : ");
+			System.out.println(entry.getKey());
 			entry.getValue().print();
+			System.out.println();
 		}
 
-		System.out.println("Stream===========================================");
+		System.out.println("====================Stream=======================");
 		Set<Entry<String, Stream>> streamSets = streams.entrySet();
 		for (Entry<String, Stream> entry : streamSets) {
-			System.out.println(entry.getKey() + " : ");
+			System.out.println(entry.getKey());
 			entry.getValue().print();
+			System.out.println();
 		}
 	}
 }
