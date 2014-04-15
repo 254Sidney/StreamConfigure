@@ -36,36 +36,6 @@ public class ParserCfg {
 		ffservercfg.printCfg();
 	}
 
-	/**
-	 * write this ffserver.conf to file
-	 * 
-	 * @param path
-	 *            which you want to save this configure
-	 * @return void
-	 */
-	public void writeCfg(String path) {
-		PrintWriter pw = null;
-		File dstFile;
-		try {
-			dstFile = new File(path);
-			if (!dstFile.exists())
-				dstFile.createNewFile();
-
-			pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(
-					dstFile)), true);
-			/* empty the file */
-			pw.print(String.valueOf(""));
-			ffservercfg.writeCfg(pw);
-
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		} finally {
-			if (pw != null) {
-				pw.close();
-			}
-		}
-	}
-
 	State getCommonState() {
 		return commonState;
 	}
@@ -99,11 +69,45 @@ public class ParserCfg {
 	}
 
 	void addFeedSection(String name) {
-
+		ffservercfg.addFeedSection(name);
 	}
 
 	void addStreamSection(String name) {
+		ffservercfg.addStreamSection(name);
+	}
 
+	void addCommonSection() {
+		ffservercfg.addCommonSection();
+	}
+
+	/**
+	 * write this ffserver.conf to file
+	 * 
+	 * @param path
+	 *            which you want to save this configure
+	 * @return void
+	 */
+	public void writeCfg(String path) {
+		PrintWriter pw = null;
+		File dstFile;
+		try {
+			dstFile = new File(path);
+			if (!dstFile.exists())
+				dstFile.createNewFile();
+
+			pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(
+					dstFile)), true);
+			/* empty the file */
+			pw.print(String.valueOf(""));
+			ffservercfg.writeCfg(pw);
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			if (pw != null) {
+				pw.close();
+			}
+		}
 	}
 
 	/**
@@ -114,13 +118,22 @@ public class ParserCfg {
 	 * @return
 	 */
 	public void addNewStream(String rtspUrl) {
-		if(!rtspUrl.startsWith("rtsp://")) {
+		if (!rtspUrl.startsWith("rtsp://")) {
 			throw new IllegalArgumentException("Error rtsp url");
 		}
-		
-		String str = rtspUrl.substring(rtspUrl.indexOf("rtsp://") + 7, rtspUrl.lastIndexOf('/'));
+
+		String str = rtspUrl.substring(rtspUrl.indexOf("rtsp://") + 7,
+				rtspUrl.lastIndexOf('/'));
 		String identity = str.replace('.', '-').replace(':', '_');
-		System.out.print(identity);
+		if (ffservercfg.isExist(identity)) {
+			System.out.println("Exist"); // FIXME
+		} else {
+			addFeedSection(identity);
+			addStreamSection(identity);
+			writeCfg(String
+					.valueOf("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf"));
+		}
+
 	}
 
 	public void parse() {
@@ -132,7 +145,8 @@ public class ParserCfg {
 
 			while ((line = reader.readLine()) != null) {
 				// skip comment line and space line
-				if (!line.startsWith(String.valueOf("#")) && !line.isEmpty())
+				if (!line.startsWith(String.valueOf("#")) && !line.isEmpty()
+						&& !line.matches("^\\s*\n$") && !line.matches("\\s*$"))
 					classify(line);
 			}
 
@@ -152,12 +166,12 @@ public class ParserCfg {
 
 	public static void main(String[] args) {
 		ParserCfg parser = new ParserCfg(
-				"/home/sijiewang/MyDisk/Projects/stream-media-test/ffserver.conf");
+				"/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf");
 		parser.parse();
-		parser.printCfg();
-		parser.writeCfg(String.valueOf("/tmp/ff.conf"));
+		// parser.printCfg();
 		parser.addNewStream(String
 				.valueOf("rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp"));
+		// parser.writeCfg(String.valueOf("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf"));
 
 	}
 }

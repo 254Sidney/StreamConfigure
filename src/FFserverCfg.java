@@ -1,5 +1,6 @@
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -9,7 +10,7 @@ class Common {
 	private Map<String, String> commonVal;
 
 	public Common() {
-		commonVal = new HashMap<String, String>();
+		commonVal = new LinkedHashMap<String, String>();
 		commonVal.clear();
 	}
 
@@ -22,10 +23,12 @@ class Common {
 		StringBuilder sb = new StringBuilder();
 		Set<Entry<String, String>> sets = commonVal.entrySet();
 		for (Entry<String, String> entry : sets) {
-			// System.out.println(entry.getKey() + " : " + entry.getValue());
 			sb.append(entry.getKey());
 			sb.append(" ");
-			sb.append(entry.getValue());
+			if (entry.getValue() == null)
+				sb.append("");
+			else
+				sb.append(entry.getValue());
 			sb.append("\n");
 		}
 		return sb.toString();
@@ -37,7 +40,7 @@ class Stream {
 	private Map<String, String> streamVal;
 
 	public Stream() {
-		streamVal = new HashMap<String, String>();
+		streamVal = new LinkedHashMap<String, String>();
 		streamVal.clear();
 	}
 
@@ -52,7 +55,10 @@ class Stream {
 		for (Entry<String, String> entry : sets) {
 			sb.append(entry.getKey());
 			sb.append(" ");
-			sb.append(entry.getValue());
+			if (entry.getValue() == null)
+				sb.append("");
+			else
+				sb.append(entry.getValue());
 			sb.append("\n");
 		}
 		return sb.toString();
@@ -64,7 +70,7 @@ class Feed {
 	private Map<String, String> feedVal;
 
 	public Feed() {
-		feedVal = new HashMap<String, String>();
+		feedVal = new LinkedHashMap<String, String>();
 		feedVal.clear();
 	}
 
@@ -79,7 +85,10 @@ class Feed {
 		for (Entry<String, String> entry : sets) {
 			sb.append(entry.getKey());
 			sb.append(" ");
-			sb.append(entry.getValue());
+			if (entry.getValue() == null)
+				sb.append("");
+			else
+				sb.append(entry.getValue());
 			sb.append("\n");
 		}
 		return sb.toString();
@@ -94,8 +103,8 @@ public class FFserverCfg {
 
 	public FFserverCfg() {
 		commonCfg = new Common();
-		feeds = new HashMap<String, Feed>();
-		streams = new HashMap<String, Stream>();
+		feeds = new LinkedHashMap<String, Feed>();
+		streams = new LinkedHashMap<String, Stream>();
 	}
 
 	void addCommon(String key, String val) {
@@ -110,6 +119,39 @@ public class FFserverCfg {
 		streams.put(name, stream);
 	}
 
+	void addFeedSection(String name) {
+		Feed feed = new Feed();
+		feed.addVal("File ", "/tmp/" + name + ".ffm");
+		feed.addVal("FileMaxSize ", "20000K");
+		feed.addVal("ACL allow ", "127.0.0.1");
+		feed.addVal("Truncate ", null);
+		feeds.put(name + ".ffm", feed);
+	}
+
+	void addStreamSection(String name) {
+		Stream stream = new Stream();
+		stream.addVal("Feed ", name + ".ffm");
+		stream.addVal("Format ", "rtp");
+		stream.addVal("VideoFrameRate ", "24");
+		stream.addVal("VideoBitRate ", "1000");
+		stream.addVal("VideoSize ", "720x480");
+		stream.addVal("VideoBitRateTolerance ", "1000");
+		stream.addVal("VideoGopSize ", "12");
+		stream.addVal("StartSendOnKey ", null);
+		stream.addVal("VideoQMin ", "3");
+		stream.addVal("VideoQMax ", "31");
+		stream.addVal("AVOptionVideo flags ", "+global_header");
+		stream.addVal("AVOptionVideo qmain ", "3");
+		stream.addVal("AVOptionVideo qmax ", "31");
+		stream.addVal("AVOptionVideo qdiff ", "4");
+		stream.addVal("NoAudio ", null);
+		streams.put(name + ".rtp", stream);
+	}
+
+	void addCommonSection() {
+
+	}
+
 	/*
 	 * 看看给定的流是不是已经在配置文件里了， 这里只需要判断有没有对应的Stream就可以了， 因为我认为Stream和feed一定是成对出现的。
 	 * 
@@ -118,7 +160,7 @@ public class FFserverCfg {
 	 * @return true-exist; false-not exist
 	 */
 	boolean isExist(String name) {
-		return streams.containsKey(name);
+		return streams.containsKey(name + ".rtp");
 	}
 
 	/**

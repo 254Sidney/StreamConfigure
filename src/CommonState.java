@@ -7,7 +7,6 @@ public class CommonState implements State {
 
 	@Override
 	public void classify(String line) {
-		//System.out.println(line);
 		
 		if (line.startsWith(String.valueOf("<Feed"))) {
 			parserCfg.setState(parserCfg.getFeedState());
