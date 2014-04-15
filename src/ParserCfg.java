@@ -130,10 +130,11 @@ public class ParserCfg {
 		} else {
 			addFeedSection(identity);
 			addStreamSection(identity);
-			writeCfg(String
-					.valueOf("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf"));
+			writeCfg(ffCfgPath);
 		}
-
+		
+		/*Restart ffserver*/
+		
 	}
 
 	public void parse() {
@@ -171,6 +172,9 @@ public class ParserCfg {
 		// parser.printCfg();
 		parser.addNewStream(String
 				.valueOf("rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp"));
+		
+		parser.addNewStream(String
+				.valueOf("rtsp://192.168.2.211:5554/tv.rtp"));
 		// parser.writeCfg(String.valueOf("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf"));
 
 	}
