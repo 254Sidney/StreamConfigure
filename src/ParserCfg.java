@@ -1,121 +1,15 @@
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-class Common {
-	private Map<String, String> commonVal;
-
-	public Common() {
-		commonVal = new HashMap<String, String>();
-		commonVal.clear();
-	}
-
-	public void put(String key, String val) {
-		commonVal.put(key, val);
-	}
-
-	public void print() {
-		Set<Entry<String, String>> sets = commonVal.entrySet();
-		for (Entry<String, String> entry : sets) {
-			System.out.println(entry.getKey() + " : " + entry.getValue());
-		}
-	}
-}
-
-class Stream {
-	private Map<String, String> streamVal;
-
-	public Stream() {
-		streamVal = new HashMap<String, String>();
-		streamVal.clear();
-	}
-
-	public void addVal(String key, String value) {
-		streamVal.put(key, value);
-	}
-
-	public void print() {
-		Set<Entry<String, String>> sets = streamVal.entrySet();
-		for (Entry<String, String> entry : sets) {
-			System.out.println(entry.getKey() + " : " + entry.getValue());
-		}
-	}
-}
-
-class Feed {
-	private Map<String, String> feedVal;
-
-	public Feed() {
-		feedVal = new HashMap<String, String>();
-		feedVal.clear();
-	}
-
-	public void addVal(String key, String value) {
-		feedVal.put(key, value);
-	}
-
-	public void print() {
-		Set<Entry<String, String>> sets = feedVal.entrySet();
-		for (Entry<String, String> entry : sets) {
-			System.out.println(entry.getKey() + " : " + entry.getValue());
-		}
-	}
-}
-
-class FfCfg {
-	private Common commonCfg;
-	private Map<String, Feed> feeds;
-	private Map<String, Stream> streams;
-
-	public FfCfg() {
-		commonCfg = new Common();
-		feeds = new HashMap<String, Feed>();
-		streams = new HashMap<String, Stream>();
-	}
-
-	public void addCommon(String key, String val) {
-		commonCfg.put(key, val);
-	}
-
-	public void addFeed(String name, Feed feed) {
-		feeds.put(name, feed);
-	}
-
-	public void addStream(String name, Stream stream) {
-		streams.put(name, stream);
-	}
-
-	public void printCfg() {
-		System.out.println("====================Common=======================");
-		commonCfg.print();
-
-		System.out.println("====================Feed=========================");
-		Set<Entry<String, Feed>> feedSets = feeds.entrySet();
-		for (Entry<String, Feed> entry : feedSets) {
-			System.out.println(entry.getKey());
-			entry.getValue().print();
-			System.out.println();
-		}
-
-		System.out.println("====================Stream=======================");
-		Set<Entry<String, Stream>> streamSets = streams.entrySet();
-		for (Entry<String, Stream> entry : streamSets) {
-			System.out.println(entry.getKey());
-			entry.getValue().print();
-			System.out.println();
-		}
-	}
-}
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
 public class ParserCfg {
 	private String ffCfgPath;
 	private File ffCfgFile;
-	private FfCfg ffservercfg;
+	private FFserverCfg ffservercfg;
 
 	private State commonState;
 	private State feedState;
@@ -128,7 +22,7 @@ public class ParserCfg {
 		streamState = new StreamState(this);
 		state = commonState;
 
-		ffservercfg = new FfCfg();
+		ffservercfg = new FFserverCfg();
 
 		if (path == null) {
 			// use default
@@ -142,36 +36,91 @@ public class ParserCfg {
 		ffservercfg.printCfg();
 	}
 
-	public State getCommonState() {
+	/**
+	 * write this ffserver.conf to file
+	 * 
+	 * @param path
+	 *            which you want to save this configure
+	 * @return void
+	 */
+	public void writeCfg(String path) {
+		PrintWriter pw = null;
+		File dstFile;
+		try {
+			dstFile = new File(path);
+			if (!dstFile.exists())
+				dstFile.createNewFile();
+
+			pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(
+					dstFile)), true);
+			/* empty the file */
+			pw.print(String.valueOf(""));
+			ffservercfg.writeCfg(pw);
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			if (pw != null) {
+				pw.close();
+			}
+		}
+	}
+
+	State getCommonState() {
 		return commonState;
 	}
 
-	public State getFeedState() {
+	State getFeedState() {
 		return feedState;
 	}
 
-	public State getStreamState() {
+	State getStreamState() {
 		return streamState;
 	}
 
-	public void setState(State st) {
+	void setState(State st) {
 		state = st;
 	}
 
-	public void addCommon(String key, String val) {
+	void addCommon(String key, String val) {
 		ffservercfg.addCommon(key, val);
 	}
 
-	public void addFeed(String name, Feed feed) {
+	void addFeed(String name, Feed feed) {
 		ffservercfg.addFeed(name, feed);
 	}
 
-	public void addStream(String name, Stream stream) {
+	void addStream(String name, Stream stream) {
 		ffservercfg.addStream(name, stream);
 	}
 
-	public void classify(String line) {
+	void classify(String line) {
 		state.classify(line);
+	}
+
+	void addFeedSection(String name) {
+
+	}
+
+	void addStreamSection(String name) {
+
+	}
+
+	/**
+	 * 增加一个新的流，如果已经加过了就不要在加入配置文件，我会取rtsp流地址的ip:host作为该流的唯一标志
+	 * 
+	 * @param rtspUrl
+	 *            rtsp的流地址
+	 * @return
+	 */
+	public void addNewStream(String rtspUrl) {
+		if(!rtspUrl.startsWith("rtsp://")) {
+			throw new IllegalArgumentException("Error rtsp url");
+		}
+		
+		String str = rtspUrl.substring(rtspUrl.indexOf("rtsp://") + 7, rtspUrl.lastIndexOf('/'));
+		String identity = str.replace('.', '-').replace(':', '_');
+		System.out.print(identity);
 	}
 
 	public void parse() {
@@ -203,8 +152,12 @@ public class ParserCfg {
 
 	public static void main(String[] args) {
 		ParserCfg parser = new ParserCfg(
-				"/Users/sijiewang/Projects/StreamConfigure/ffserver.conf");
+				"/home/sijiewang/MyDisk/Projects/stream-media-test/ffserver.conf");
 		parser.parse();
 		parser.printCfg();
+		parser.writeCfg(String.valueOf("/tmp/ff.conf"));
+		parser.addNewStream(String
+				.valueOf("rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp"));
+
 	}
 }
