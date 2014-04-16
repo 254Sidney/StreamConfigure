@@ -16,6 +16,8 @@ public class ParserCfg {
 	private State streamState;
 	private State state;
 
+	private FFserver ffserver;
+
 	public ParserCfg(String path) {
 		commonState = new CommonState(this);
 		feedState = new FeedState(this);
@@ -23,6 +25,7 @@ public class ParserCfg {
 		state = commonState;
 
 		ffservercfg = new FFserverCfg();
+		ffserver = FFserver.getFFserver();
 
 		if (path == null) {
 			// use default
@@ -111,7 +114,9 @@ public class ParserCfg {
 	}
 
 	/**
-	 * 增加一个新的流，如果已经加过了就不要在加入配置文件，我会取rtsp流地址的ip:host作为该流的唯一标志
+	 * 增加一个新的流，如果已经加过了就不要在加入配置文件，我会取rtsp流地址的ip:host作为该流的唯一标志。
+	 * 增加一个新的流会导致重启ffserver和所有已注册的ffmpeg。
+	 * ffmpeg的输出地址一定是http://localhost:8090/{identity}.ffm 。
 	 * 
 	 * @param rtspUrl
 	 *            rtsp的流地址
@@ -127,14 +132,18 @@ public class ParserCfg {
 		String identity = str.replace('.', '-').replace(':', '_');
 		if (ffservercfg.isExist(identity)) {
 			System.out.println("Exist"); // FIXME
+			
 		} else {
 			addFeedSection(identity);
 			addStreamSection(identity);
 			writeCfg(ffCfgPath);
+
+			/* Restart ffserver */
+			ffserver.stop();
+			/* 注册一个新的ffmpeg用于新的流 */
+			ffserver.addFFmpeg(rtspUrl, "http://localhost:8090/" + identity + ".ffm");
+			ffserver.start();
 		}
-		
-		/*Restart ffserver*/
-		
 	}
 
 	public void parse() {
@@ -172,9 +181,8 @@ public class ParserCfg {
 		// parser.printCfg();
 		parser.addNewStream(String
 				.valueOf("rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp"));
-		
-		parser.addNewStream(String
-				.valueOf("rtsp://192.168.2.211:5554/tv.rtp"));
+
+		parser.addNewStream(String.valueOf("rtsp://192.168.2.211:5554/tv.rtp"));
 		// parser.writeCfg(String.valueOf("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf"));
 
 	}
