@@ -45,7 +45,7 @@ class Stream {
 		streamVal.clear();
 	}
 
-	public void addVal(String key, String value) {
+	public void addItem(String key, String value) {
 		streamVal.put(key, value);
 	}
 
@@ -75,7 +75,7 @@ class Feed {
 		feedVal.clear();
 	}
 
-	public void addVal(String key, String value) {
+	public void addItem(String key, String value) {
 		feedVal.put(key, value);
 	}
 
@@ -110,71 +110,71 @@ public class FFserverCfg {
 		streams = new LinkedHashMap<String, Stream>();
 	}
 
-	void addCommon(String key, String val) {
+	void addCommonItem(String key, String val) {
 		commonCfg.put(key, val);
 	}
 
-	void addFeed(String name, Feed feed) {
+	void addFeedSection(String name, Feed feed) {
 		synchronized (syncFeeds) {
 			feeds.put(name, feed);
 		}
 	}
 
-	void deleteFeed(String name) {
+	void deleteFeedSection(String name) {
 		synchronized (syncFeeds) {
 			feeds.remove(name);
 		}
 	}
 
-	void addStream(String name, Stream stream) {
+	void addStreamSection(String name, Stream stream) {
 		synchronized (syncStreams) {
 			streams.put(name, stream);
 		}
 	}
 
-	void deleteStream(String name) {
+	void deleteStreamSection(String name) {
 		synchronized (syncStreams) {
 			streams.remove(name);
 		}
 	}
 
-	void addCommonSection() {
-		addCommon("Port ", "8090");
-		addCommon("MaxClients ", "1000");
-		addCommon("MaxHttpConnections ", "2000");
-		addCommon("BindAddress ", "0.0.0.0");
-		addCommon("RTSPPort ", "5554");
-		addCommon("MaxBandwidth ", "10000000");
-		addCommon("CustomLog ", "-");
+	void buildCommonSection() {
+		addCommonItem("Port ", "8090");
+		addCommonItem("MaxClients ", "1000");
+		addCommonItem("MaxHttpConnections ", "2000");
+		addCommonItem("BindAddress ", "0.0.0.0");
+		addCommonItem("RTSPPort ", "5554");
+		addCommonItem("MaxBandwidth ", "10000000");
+		addCommonItem("CustomLog ", "-");
 	}
 
-	void addFeedSection(String name) {
+	void buildFeedSection(String name) {
 		Feed feed = new Feed();
-		feed.addVal("File ", "/tmp/" + name + ".ffm");
-		feed.addVal("FileMaxSize ", "20000K");
-		feed.addVal("ACL allow ", "127.0.0.1");
-		feed.addVal("Truncate ", null);
-		addFeed(name + ".ffm", feed);
+		feed.addItem("File ", "/tmp/" + name + ".ffm");
+		feed.addItem("FileMaxSize ", "20000K");
+		feed.addItem("ACL allow ", "127.0.0.1");
+		feed.addItem("Truncate ", null);
+		addFeedSection(name + ".ffm", feed);
 	}
 
-	void addStreamSection(String name) {
+	void buildStreamSection(String name) {
 		Stream stream = new Stream();
-		stream.addVal("Feed ", name + ".ffm");
-		stream.addVal("Format ", "rtp");
-		stream.addVal("VideoFrameRate ", "24");
-		stream.addVal("VideoBitRate ", "1000");
-		stream.addVal("VideoSize ", "720x480");
-		stream.addVal("VideoBitRateTolerance ", "1000");
-		stream.addVal("VideoGopSize ", "12");
-		stream.addVal("StartSendOnKey ", null);
-		stream.addVal("VideoQMin ", "3");
-		stream.addVal("VideoQMax ", "31");
-		stream.addVal("AVOptionVideo flags ", "+global_header");
-		stream.addVal("AVOptionVideo qmain ", "3");
-		stream.addVal("AVOptionVideo qmax ", "31");
-		stream.addVal("AVOptionVideo qdiff ", "4");
-		stream.addVal("NoAudio ", null);
-		addStream(name + ".rtp", stream);
+		stream.addItem("Feed ", name + ".ffm");
+		stream.addItem("Format ", "rtp");
+		stream.addItem("VideoFrameRate ", "24");
+		stream.addItem("VideoBitRate ", "1000");
+		stream.addItem("VideoSize ", "720x480");
+		stream.addItem("VideoBitRateTolerance ", "1000");
+		stream.addItem("VideoGopSize ", "12");
+		stream.addItem("StartSendOnKey ", null);
+		stream.addItem("VideoQMin ", "3");
+		stream.addItem("VideoQMax ", "31");
+		stream.addItem("AVOptionVideo flags ", "+global_header");
+		stream.addItem("AVOptionVideo qmain ", "3");
+		stream.addItem("AVOptionVideo qmax ", "31");
+		stream.addItem("AVOptionVideo qdiff ", "4");
+		stream.addItem("NoAudio ", null);
+		addStreamSection(name + ".rtp", stream);
 	}
 
 	/*

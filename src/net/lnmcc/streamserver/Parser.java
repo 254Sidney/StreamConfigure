@@ -8,24 +8,31 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class ParserCfg {
+public class Parser {
 	private String ffCfgPath;
 	private File ffCfgFile;
 	private FFserverCfg ffservercfg;
+	private FFserver ffserver;
 
 	private State commonState;
 	private State feedState;
 	private State streamState;
 	private State state;
 
-	private FFserver ffserver;
+	private static Parser parser = null;
 
-	public ParserCfg(String path) {
+	public synchronized static Parser getParser(FFserver ffserver,
+			String ffCfgPath) {
+		if (parser == null)
+			parser = new Parser(ffserver, ffCfgPath);
+		return parser;
+	}
+
+	private Parser(FFserver ffserver, String path) {
 		commonState = new CommonState(this);
 		feedState = new FeedState(this);
 		streamState = new StreamState(this);
 		state = commonState;
-
 		ffservercfg = new FFserverCfg();
 
 		if (path == null) {
@@ -34,8 +41,7 @@ public class ParserCfg {
 		} else {
 			ffCfgPath = path;
 		}
-		ffserver = FFserver.getFFserver();
-		ffserver.setPath(ffCfgPath);
+		this.ffserver = ffserver;
 	}
 
 	public void printCfg() {
@@ -58,28 +64,28 @@ public class ParserCfg {
 		state = st;
 	}
 
-	void addCommon(String key, String val) {
-		ffservercfg.addCommon(key, val);
+	void addCommonItem(String key, String val) {
+		ffservercfg.addCommonItem(key, val);
 	}
 
 	void addFeed(String name, Feed feed) {
-		ffservercfg.addFeed(name, feed);
+		ffservercfg.addFeedSection(name, feed);
 	}
 
 	void addStream(String name, Stream stream) {
-		ffservercfg.addStream(name, stream);
+		ffservercfg.addStreamSection(name, stream);
+	}
+
+	void buildFeedSection(String name) {
+		ffservercfg.buildFeedSection(name);
+	}
+
+	void buildStreamSection(String name) {
+		ffservercfg.buildStreamSection(name);
 	}
 
 	void classify(String line) {
 		state.classify(line);
-	}
-
-	void addFeedSection(String name) {
-		ffservercfg.addFeedSection(name);
-	}
-
-	void addStreamSection(String name) {
-		ffservercfg.addStreamSection(name);
 	}
 
 	/**
@@ -123,7 +129,7 @@ public class ParserCfg {
 	 *            &channel=1&stream=0.sdp
 	 * @return
 	 */
-	public void addNewStream(String rtspUrl) {
+	public void addStream(String rtspUrl) {
 		if (!rtspUrl.startsWith("rtsp://")) {
 			throw new IllegalArgumentException("Error rtsp url");
 		}
@@ -135,13 +141,13 @@ public class ParserCfg {
 			System.out.println("Exist"); // FIXME
 
 		} else {
-			addFeedSection(identity);
-			addStreamSection(identity);
-			writeCfg(ffCfgPath);
-
-			/* Restart ffserver */
+			buildFeedSection(identity);
+			buildStreamSection(identity);
+			/* Restart ffserver, use new configure file */
 			ffserver.stop();
+			writeCfg(ffCfgPath);
 			ffserver.start();
+			
 			/* 注册一个新的ffmpeg用于新的流 */
 			ffserver.addFFmpeg(rtspUrl, "http://localhost:8090/" + identity
 					+ ".ffm");
@@ -168,8 +174,8 @@ public class ParserCfg {
 		if (!ffservercfg.isExist(identity))
 			return;
 
-		ffservercfg.deleteFeed(identity + ".ffm");
-		ffservercfg.deleteStream(identity + ".rtp");
+		ffservercfg.deleteFeedSection(identity + ".ffm");
+		ffservercfg.deleteStreamSection(identity + ".rtp");
 		writeCfg(ffCfgPath);
 		ffserver.stop();
 		ffserver.start();
@@ -191,6 +197,7 @@ public class ParserCfg {
 	public void parse() {
 		ffCfgFile = new File(ffCfgPath);
 		BufferedReader reader = null;
+
 		try {
 			reader = new BufferedReader(new FileReader(ffCfgFile));
 			String line = null;
@@ -216,27 +223,30 @@ public class ParserCfg {
 		}
 	}
 
-	public static void main(String[] args) {
-		final String rtspUrl = "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp";
-		ParserCfg parser = new ParserCfg(
-				"/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf");
-		parser.parse();
-		// parser.printCfg();
-		parser.addNewStream(rtspUrl);
-
-		// parser.addNewStream(String.valueOf("rtsp://192.168.2.211:5554/tv.rtp"));
-		// parser.writeCfg(String.valueOf("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf"));
-
-		try {
-			Thread.sleep(20 * 1000);
-			parser.stopStream(rtspUrl);
-			Thread.sleep(2 * 1000);
-			parser.deleteStream(rtspUrl);
-			Thread.sleep(2 * 1000);
-			parser.addNewStream(rtspUrl);
-
-		} catch (InterruptedException ex) {
-			ex.printStackTrace();
-		}
-	}
+	// public static void main(String[] args) {
+	// final String rtspUrl =
+	// "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp";
+	// Parser parser = new
+	// Parser("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf");
+	// parser.parse();
+	// // parser.printCfg();
+	// parser.addNewStream(rtspUrl);
+	//
+	// //
+	// parser.addNewStream(String.valueOf("rtsp://192.168.2.211:5554/tv.rtp"));
+	// //
+	// parser.writeCfg(String.valueOf("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf"));
+	//
+	// try {
+	// Thread.sleep(20 * 1000);
+	// parser.stopStream(rtspUrl);
+	// Thread.sleep(2 * 1000);
+	// parser.deleteStream(rtspUrl);
+	// Thread.sleep(2 * 1000);
+	// parser.addNewStream(rtspUrl);
+	//
+	// } catch (InterruptedException ex) {
+	// ex.printStackTrace();
+	// }
+	// }
 }

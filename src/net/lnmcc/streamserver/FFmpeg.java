@@ -62,17 +62,17 @@ public class FFmpeg {
 		}
 	}
 
-	public static void main(String[] args) {
-		FFmpeg ffmpeg = new FFmpeg(
-				"rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp",
-				"http://localhost:8090/192-168-2-191_554.ffm");
-		ffmpeg.start();
-		try {
-			Thread.sleep(60 * 1000);
-			ffmpeg.stop();
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-		System.out.println("Main exit");
-	}
+//	public static void main(String[] args) {
+//		FFmpeg ffmpeg = new FFmpeg(
+//				"rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp",
+//				"http://localhost:8090/192-168-2-191_554.ffm");
+//		ffmpeg.start();
+//		try {
+//			Thread.sleep(60 * 1000);
+//			ffmpeg.stop();
+//		} catch (Exception ex) {
+//			ex.printStackTrace();
+//		}
+//		System.out.println("Main exit");
+//	}
 }

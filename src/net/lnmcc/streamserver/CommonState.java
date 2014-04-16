@@ -1,9 +1,9 @@
 package net.lnmcc.streamserver;
 
 public class CommonState implements State {
-	private ParserCfg parserCfg;
+	private Parser parserCfg;
 
-	public CommonState(ParserCfg pc) {
+	public CommonState(Parser pc) {
 		parserCfg = pc;
 	}
 
@@ -30,7 +30,7 @@ public class CommonState implements State {
 			String[] str = line.split("\\s+");
 			String str0 = str[0].trim();
 			String str1 = str[1].trim();
-			parserCfg.addCommon(str0, str1);
+			parserCfg.addCommonItem(str0, str1);
 		}
 	}
 }

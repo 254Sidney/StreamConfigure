@@ -1,10 +1,10 @@
 package net.lnmcc.streamserver;
 
 public class StreamState implements State {
-	private ParserCfg parserCfg;
+	private Parser parserCfg;
 	private Stream stream;
 
-	public StreamState(ParserCfg pc) {
+	public StreamState(Parser pc) {
 		parserCfg = pc;
 	}
 
@@ -38,15 +38,15 @@ public class StreamState implements State {
 			String[] str = line.split("\\s+");
 			if (str.length == 1) {
 				String key = str[0].trim();
-				stream.addVal(key, null);
+				stream.addItem(key, null);
 			} else if (str.length == 2) {
 				String key = str[0].trim();
 				String value = str[1].trim();
-				stream.addVal(key, value);
+				stream.addItem(key, value);
 			} else if (str.length == 3) {
 				String key = str[0].trim() + " " + str[1].trim();
 				String value = str[2].trim();
-				stream.addVal(key, value);
+				stream.addItem(key, value);
 			}
 		}
 	}

@@ -1,10 +1,10 @@
 package net.lnmcc.streamserver;
 
 public class FeedState implements State {
-	private ParserCfg parsercfg;
+	private Parser parsercfg;
 	private Feed feed;
 
-	public FeedState(ParserCfg pc) {
+	public FeedState(Parser pc) {
 		parsercfg = pc;
 	}
 
@@ -35,15 +35,15 @@ public class FeedState implements State {
 			String[] str = line.split("\\s+");
 			if (str.length == 1) {
 				String key = str[0].trim();
-				feed.addVal(key, null);
+				feed.addItem(key, null);
 			} else if (str.length == 2) {
 				String key = str[0].trim();
 				String value = str[1].trim();
-				feed.addVal(key, value);
+				feed.addItem(key, value);
 			} else if (str.length == 3) {
 				String key = str[0].trim() + " " + str[1].trim();
 				String value = str[2].trim();
-				feed.addVal(key, value);
+				feed.addItem(key, value);
 			}
 		}
 	}

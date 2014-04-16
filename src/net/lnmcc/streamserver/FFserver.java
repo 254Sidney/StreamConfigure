@@ -9,24 +9,21 @@ import java.util.Map;
 public class FFserver {
 	private String cfgPath;
 	private Process ps = null;
-	private boolean needExit = false;
+	private volatile boolean needExit = false;
 	private Map<String, FFmpeg> ffmpegs;
 	private Object syncSS = new Object(); // start stop sync object
 	private Object syncAD = new Object(); // add delete sync object
 	private static FFserver ffserver = null;
 
-	private FFserver() {
+	private FFserver(String cfgPath) {
 		ffmpegs = new HashMap<String, FFmpeg>();
+		this.cfgPath = cfgPath;
 	}
 
-	public synchronized static FFserver getFFserver() {
+	public synchronized static FFserver getFFserver(String cfgPath) {
 		if (ffserver == null)
-			ffserver = new FFserver();
+			ffserver = new FFserver(cfgPath);
 		return ffserver;
-	}
-
-	public void setPath(String path) {
-		cfgPath = path;
 	}
 
 	boolean isExist(String name) {
@@ -117,6 +114,7 @@ public class FFserver {
 							}
 
 							ps.waitFor();
+							System.out.println("Restarting ffserver ... ...");
 							Thread.sleep(1000);
 						}
 					} catch (Exception e) {
@@ -126,49 +124,55 @@ public class FFserver {
 				}
 			});
 			t.start();
+			
+			while(needExit == false && ps == null) {
+				try{
+					Thread.sleep(1000);
+				} catch(InterruptedException ex) {
+					ex.printStackTrace();
+				}
+			}
+			startAllFFmpeg();
 		}
-
-		startAllFFmpeg();
 	}
 
 	/**
 	 * 停止ffserver,同时也会停止所有已经注册的ffmpeg
 	 */
 	public void stop() {
+	
 		synchronized (syncSS) {
-
+			stopAllFFmpeg();
 			needExit = true;
-
 			if (ps != null) {
 				ps.destroy();
 			}
 		}
-		stopAllFFmpeg();
 	}
 
-	public static void main(String[] args) {
-		FFserver ffserver = FFserver.getFFserver();
-		ffserver.setPath(String
-				.valueOf("/home/sijiewang/Projects/stream-media-test/ff.conf"));
-
-		ffserver.start();
-
-		ffserver.addFFmpeg(
-				"rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp",
-				"http://localhost:8090/192-168-2-191_554.ffm");
-
-		try {
-			Thread.sleep(5 * 1000);
-			ffserver.stopAllFFmpeg();
-			Thread.sleep(5 * 1000);
-			ffserver.startAllFFmpeg();
-
-			Thread.sleep(60 * 1000);
-			ffserver.deleteFFmpeg("rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp");
-			ffserver.stop();
-		} catch (InterruptedException ex) {
-			ex.printStackTrace();
-		}
-		System.out.println("Main exit");
-	}
+	// public static void main(String[] args) {
+	// FFserver ffserver = FFserver.getFFserver();
+	// ffserver.setPath(String
+	// .valueOf("/home/sijiewang/Projects/stream-media-test/ff.conf"));
+	//
+	// ffserver.start();
+	//
+	// ffserver.addFFmpeg(
+	// "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp",
+	// "http://localhost:8090/192-168-2-191_554.ffm");
+	//
+	// try {
+	// Thread.sleep(5 * 1000);
+	// ffserver.stopAllFFmpeg();
+	// Thread.sleep(5 * 1000);
+	// ffserver.startAllFFmpeg();
+	//
+	// Thread.sleep(60 * 1000);
+	// ffserver.deleteFFmpeg("rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp");
+	// ffserver.stop();
+	// } catch (InterruptedException ex) {
+	// ex.printStackTrace();
+	// }
+	// System.out.println("Main exit");
+	// }
 }
