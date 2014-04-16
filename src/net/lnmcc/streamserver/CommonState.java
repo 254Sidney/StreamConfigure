@@ -1,3 +1,5 @@
+package net.lnmcc.streamserver;
+
 public class CommonState implements State {
 	private ParserCfg parserCfg;
 

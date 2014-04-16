@@ -1,10 +1,10 @@
+package net.lnmcc.streamserver;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public class FFserver {
 	private String cfgPath;
@@ -72,23 +72,23 @@ public class FFserver {
 	}
 
 	void stopAllFFmpeg() {
-		synchronized(syncAD) {
+		synchronized (syncAD) {
 			Collection<FFmpeg> vals = ffmpegs.values();
-			for(FFmpeg ffmpeg : vals) {
+			for (FFmpeg ffmpeg : vals) {
 				ffmpeg.stop();
 			}
 		}
 	}
-	
+
 	void startAllFFmpeg() {
-		synchronized(syncAD) {
+		synchronized (syncAD) {
 			Collection<FFmpeg> vals = ffmpegs.values();
-			for(FFmpeg ffmpeg : vals) {
+			for (FFmpeg ffmpeg : vals) {
 				ffmpeg.start();
 			}
 		}
 	}
-	
+
 	/**
 	 * 启动ffserver, 同时也会启动所有注册的ffmpeg
 	 */
@@ -122,14 +122,15 @@ public class FFserver {
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
+					ps = null;
 				}
 			});
 			t.start();
 		}
-		
+
 		startAllFFmpeg();
 	}
-	
+
 	/**
 	 * 停止ffserver,同时也会停止所有已经注册的ffmpeg
 	 */
@@ -140,7 +141,6 @@ public class FFserver {
 
 			if (ps != null) {
 				ps.destroy();
-				ps = null;
 			}
 		}
 		stopAllFFmpeg();
@@ -156,13 +156,13 @@ public class FFserver {
 		ffserver.addFFmpeg(
 				"rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp",
 				"http://localhost:8090/192-168-2-191_554.ffm");
-		
+
 		try {
 			Thread.sleep(5 * 1000);
 			ffserver.stopAllFFmpeg();
 			Thread.sleep(5 * 1000);
 			ffserver.startAllFFmpeg();
-			
+
 			Thread.sleep(60 * 1000);
 			ffserver.deleteFFmpeg("rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp");
 			ffserver.stop();

@@ -1,3 +1,5 @@
+package net.lnmcc.streamserver;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
@@ -43,6 +45,7 @@ public class FFmpeg {
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
+					ps = null;
 				}
 			});
 			t.start();
@@ -55,7 +58,6 @@ public class FFmpeg {
 
 			if (ps != null) {
 				ps.destroy();
-				ps = null;
 			}
 		}
 	}

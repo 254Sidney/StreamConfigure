@@ -1,3 +1,5 @@
+package net.lnmcc.streamserver;
+
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -99,6 +101,8 @@ public class FFserverCfg {
 	private Common commonCfg;
 	private Map<String, Feed> feeds;
 	private Map<String, Stream> streams;
+	private Object syncFeeds = new Object();
+	private Object syncStreams = new Object();
 
 	public FFserverCfg() {
 		commonCfg = new Common();
@@ -111,11 +115,37 @@ public class FFserverCfg {
 	}
 
 	void addFeed(String name, Feed feed) {
-		feeds.put(name, feed);
+		synchronized (syncFeeds) {
+			feeds.put(name, feed);
+		}
+	}
+
+	void deleteFeed(String name) {
+		synchronized (syncFeeds) {
+			feeds.remove(name);
+		}
 	}
 
 	void addStream(String name, Stream stream) {
-		streams.put(name, stream);
+		synchronized (syncStreams) {
+			streams.put(name, stream);
+		}
+	}
+
+	void deleteStream(String name) {
+		synchronized (syncStreams) {
+			streams.remove(name);
+		}
+	}
+
+	void addCommonSection() {
+		addCommon("Port ", "8090");
+		addCommon("MaxClients ", "1000");
+		addCommon("MaxHttpConnections ", "2000");
+		addCommon("BindAddress ", "0.0.0.0");
+		addCommon("RTSPPort ", "5554");
+		addCommon("MaxBandwidth ", "10000000");
+		addCommon("CustomLog ", "-");
 	}
 
 	void addFeedSection(String name) {
@@ -124,7 +154,7 @@ public class FFserverCfg {
 		feed.addVal("FileMaxSize ", "20000K");
 		feed.addVal("ACL allow ", "127.0.0.1");
 		feed.addVal("Truncate ", null);
-		feeds.put(name + ".ffm", feed);
+		addFeed(name + ".ffm", feed);
 	}
 
 	void addStreamSection(String name) {
@@ -144,11 +174,7 @@ public class FFserverCfg {
 		stream.addVal("AVOptionVideo qmax ", "31");
 		stream.addVal("AVOptionVideo qdiff ", "4");
 		stream.addVal("NoAudio ", null);
-		streams.put(name + ".rtp", stream);
-	}
-
-	void addCommonSection() {
-
+		addStream(name + ".rtp", stream);
 	}
 
 	/*

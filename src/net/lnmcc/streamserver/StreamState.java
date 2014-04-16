@@ -1,3 +1,5 @@
+package net.lnmcc.streamserver;
+
 public class StreamState implements State {
 	private ParserCfg parserCfg;
 	private Stream stream;
@@ -25,10 +27,12 @@ public class StreamState implements State {
 			parserCfg.setState(parserCfg.getCommonState());
 			stream = null;
 		} else if (line.startsWith(String.valueOf("<Feed"))) {
-			throw new IllegalStateException(String.valueOf("Error config format"));
+			throw new IllegalStateException(
+					String.valueOf("Error config format"));
 
 		} else if (line.startsWith(String.valueOf("</Feed"))) {
-			throw new IllegalStateException(String.valueOf("Error config format"));
+			throw new IllegalStateException(
+					String.valueOf("Error config format"));
 
 		} else {
 			String[] str = line.split("\\s+");

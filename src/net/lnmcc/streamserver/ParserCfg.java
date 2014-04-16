@@ -1,3 +1,5 @@
+package net.lnmcc.streamserver;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,7 +27,6 @@ public class ParserCfg {
 		state = commonState;
 
 		ffservercfg = new FFserverCfg();
-		ffserver = FFserver.getFFserver();
 
 		if (path == null) {
 			// use default
@@ -33,6 +34,8 @@ public class ParserCfg {
 		} else {
 			ffCfgPath = path;
 		}
+		ffserver = FFserver.getFFserver();
+		ffserver.setPath(ffCfgPath);
 	}
 
 	public void printCfg() {
@@ -79,10 +82,6 @@ public class ParserCfg {
 		ffservercfg.addStreamSection(name);
 	}
 
-	void addCommonSection() {
-		ffservercfg.addCommonSection();
-	}
-
 	/**
 	 * write this ffserver.conf to file
 	 * 
@@ -119,7 +118,9 @@ public class ParserCfg {
 	 * ffmpeg的输出地址一定是http://localhost:8090/{identity}.ffm 。
 	 * 
 	 * @param rtspUrl
-	 *            rtsp的流地址
+	 *            rtsp的流地址 比如：
+	 *            rtsp://192.168.2.191:554/user=admin&password=admin
+	 *            &channel=1&stream=0.sdp
 	 * @return
 	 */
 	public void addNewStream(String rtspUrl) {
@@ -132,7 +133,7 @@ public class ParserCfg {
 		String identity = str.replace('.', '-').replace(':', '_');
 		if (ffservercfg.isExist(identity)) {
 			System.out.println("Exist"); // FIXME
-			
+
 		} else {
 			addFeedSection(identity);
 			addStreamSection(identity);
@@ -140,10 +141,51 @@ public class ParserCfg {
 
 			/* Restart ffserver */
 			ffserver.stop();
-			/* 注册一个新的ffmpeg用于新的流 */
-			ffserver.addFFmpeg(rtspUrl, "http://localhost:8090/" + identity + ".ffm");
 			ffserver.start();
+			/* 注册一个新的ffmpeg用于新的流 */
+			ffserver.addFFmpeg(rtspUrl, "http://localhost:8090/" + identity
+					+ ".ffm");
 		}
+	}
+
+	/**
+	 * 删除一个流首先会停止这个流，然后把与该流相关的信息从ffserver.conf中删除。 这个方法会导致ffserver重启。
+	 * ffserver会自动重启他说有注册过的ffmpeg 。
+	 * 
+	 * @param rtspUrl
+	 */
+	public void deleteStream(String rtspUrl) {
+		if (!rtspUrl.startsWith("rtsp://")) {
+			throw new IllegalArgumentException("Error rtsp url");
+		}
+
+		stopStream(rtspUrl);
+
+		String str = rtspUrl.substring(rtspUrl.indexOf("rtsp://") + 7,
+				rtspUrl.lastIndexOf('/'));
+		String identity = str.replace('.', '-').replace(':', '_');
+
+		if (!ffservercfg.isExist(identity))
+			return;
+
+		ffservercfg.deleteFeed(identity + ".ffm");
+		ffservercfg.deleteStream(identity + ".rtp");
+		writeCfg(ffCfgPath);
+		ffserver.stop();
+		ffserver.start();
+	}
+
+	/**
+	 * 停止一个流只是取消该流在ffmserver中的注册并关闭对应的ffmpeg。不会把ffserver.conf中对应的section删除。
+	 * 
+	 * @param rtspUrl
+	 */
+	public void stopStream(String rtspUrl) {
+		if (!rtspUrl.startsWith("rtsp://")) {
+			throw new IllegalArgumentException("Error rtsp url");
+		}
+
+		ffserver.deleteFFmpeg(rtspUrl);
 	}
 
 	public void parse() {
@@ -175,15 +217,26 @@ public class ParserCfg {
 	}
 
 	public static void main(String[] args) {
+		final String rtspUrl = "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp";
 		ParserCfg parser = new ParserCfg(
 				"/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf");
 		parser.parse();
 		// parser.printCfg();
-		parser.addNewStream(String
-				.valueOf("rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp"));
+		parser.addNewStream(rtspUrl);
 
-		parser.addNewStream(String.valueOf("rtsp://192.168.2.211:5554/tv.rtp"));
+		// parser.addNewStream(String.valueOf("rtsp://192.168.2.211:5554/tv.rtp"));
 		// parser.writeCfg(String.valueOf("/home/sijiewang/MyDisk/Projects/stream-media-test/ff.conf"));
 
+		try {
+			Thread.sleep(20 * 1000);
+			parser.stopStream(rtspUrl);
+			Thread.sleep(2 * 1000);
+			parser.deleteStream(rtspUrl);
+			Thread.sleep(2 * 1000);
+			parser.addNewStream(rtspUrl);
+
+		} catch (InterruptedException ex) {
+			ex.printStackTrace();
+		}
 	}
 }

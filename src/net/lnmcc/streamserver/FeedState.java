@@ -1,3 +1,5 @@
+package net.lnmcc.streamserver;
+
 public class FeedState implements State {
 	private ParserCfg parsercfg;
 	private Feed feed;
