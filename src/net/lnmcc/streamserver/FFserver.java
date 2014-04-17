@@ -117,10 +117,17 @@ public class FFserver {
 							System.out.println("Restarting ffserver ... ...");
 							Thread.sleep(1000);
 						}
+						
+						ps = null;
+						
 					} catch (Exception e) {
 						e.printStackTrace();
+					} finally {
+						if(ps != null) {
+							ps.destroy();
+							ps = null;
+						}
 					}
-					ps = null;
 				}
 			});
 			t.start();
@@ -146,6 +153,14 @@ public class FFserver {
 			needExit = true;
 			if (ps != null) {
 				ps.destroy();
+			}
+			
+			while(ps != null) {
+				try {
+					Thread.sleep(1000);
+				} catch(InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
