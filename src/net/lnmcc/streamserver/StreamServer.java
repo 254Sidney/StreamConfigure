@@ -73,7 +73,7 @@ public class StreamServer {
 		new ShutDownClear(streamServer);
 
 		streamServer.startFFserver();
-		//streamServer.addStream(rtspUrl1);
+		streamServer.addStream(rtspUrl1);
 
 		try {
 			Thread.sleep(5 * 1000);

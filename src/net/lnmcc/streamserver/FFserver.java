@@ -4,7 +4,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +24,7 @@ public class FFserver {
 	private static FFserver ffserver = null;
 
 	private FFserver(String cfgPath, String ffmpegCfgPath) {
-		ffmpegs = new HashMap<String, FFmpeg>();
+		// ffmpegs = new HashMap<String, FFmpeg>();
 		this.cfgPath = cfgPath;
 		this.ffmpegCfgPath = ffmpegCfgPath;
 		getAllFFmpegs(ffmpegCfgPath);
@@ -28,26 +32,26 @@ public class FFserver {
 
 	/* 当server第一次启动的时候从文件中回复ffmpeg的配置 */
 	private void getAllFFmpegs(String ffmpegCfgPath) {
-		BufferedReader br = null;
+		File ffmpegInfo = new File(ffmpegCfgPath);
+
+		if (!ffmpegInfo.exists() || !ffmpegInfo.canRead()) {
+			ffmpegs = new HashMap<String, FFmpeg>();
+			return;
+		}
+
+		ObjectInputStream ois = null;
+
 		try {
-			File file = new File(ffmpegCfgPath);
-			br = new BufferedReader(new InputStreamReader(new FileInputStream(
-					file)));
+			ois = new ObjectInputStream(new FileInputStream(ffmpegInfo));
+			Object o = ois.readObject();
+			ffmpegs = (HashMap<String, FFmpeg>) o;
 
-			String line;
-			while ((line = br.readLine()) != null) {
-				System.out.println(line);
-			}
-
-		} catch (Exception ex) {
+		} catch (ClassNotFoundException ex) {
 			ex.printStackTrace();
-		} finally {
-			try {
-				if (br != null)
-					br.close();
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
+		} catch (FileNotFoundException ex) {
+			ex.printStackTrace();
+		} catch (IOException ex) {
+			ex.printStackTrace();
 		}
 	}
 
@@ -74,50 +78,35 @@ public class FFserver {
 		return identity;
 	}
 
-	public boolean addFFmpeg(String from, String to) {
+	boolean startFFmpeg(String from, String to) {
 		synchronized (syncAD) {
-
 			String identity = getIdentity(from);
 			if (isExist(identity))
 				return true;
 
 			FFmpeg ffmpeg = new FFmpeg(from, to);
 			ffmpegs.put(identity, ffmpeg);
-			// ffmpeg.start();
-			return true;
-		}
-	}
 
-	public boolean deleteFFmpeg(String from) {
-		synchronized (syncAD) {
+			ObjectOutputStream oos = null;
+			File ffmpegInfo = new File(ffmpegCfgPath);
 
-			String identity = getIdentity(from);
-			if (!isExist(identity))
-				return true;
-
-			FFmpeg ffmpeg = ffmpegs.get(identity);
-			if (ffmpeg.isRunning()) {
-				System.out.println("FFmpeg is running, stop it first");
-				return false;
-			}
-			// ffmpeg.stop();
-			ffmpegs.remove(identity);
-			return true;
-		}
-	}
-
-	boolean startFFmpeg(String from) {
-		synchronized (syncAD) {
-			String identity = getIdentity(from);
-
-			if (!ffmpegs.containsKey(identity)) {
-				System.out.println("You have not add the stream, add first");
-				return false;
+			try {
+				oos = new ObjectOutputStream(new FileOutputStream(ffmpegInfo));
+				oos.writeObject(ffmpegs);
+			} catch (FileNotFoundException ex) {
+				ex.printStackTrace();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			} finally {
+				try {
+					oos.flush();
+					oos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 
-			FFmpeg ffmpeg = ffmpegs.get(identity);
-			if (!ffmpeg.isRunning())
-				ffmpeg.start();
+			ffmpeg.start();
 
 			return true;
 		}
@@ -127,14 +116,33 @@ public class FFserver {
 		synchronized (syncAD) {
 
 			String identity = getIdentity(from);
-			if (!ffmpegs.containsKey(identity)) {
-				System.out.println("You have not add the stream, add first");
+			if (!isExist(identity))
 				return false;
-			}
 
 			FFmpeg ffmpeg = ffmpegs.get(identity);
 			if (ffmpeg.isRunning())
 				ffmpeg.stop();
+
+			ffmpegs.remove(identity);
+
+			ObjectOutputStream oos = null;
+			File ffmpegInfo = new File(ffmpegCfgPath);
+
+			try {
+				oos = new ObjectOutputStream(new FileOutputStream(ffmpegInfo));
+				oos.writeObject(ffmpegs);
+			} catch (FileNotFoundException ex) {
+				ex.printStackTrace();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			} finally {
+				try {
+					oos.flush();
+					oos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 
 			return true;
 		}

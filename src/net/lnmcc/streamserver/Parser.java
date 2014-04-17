@@ -145,8 +145,8 @@ public class Parser {
 			/* 查询这个流是否已经在跑了 */
 			if (!ffserver.isExist(identity)) {
 				/* 注册一个新的ffmpeg用于新的流 */
-				ffserver.addFFmpeg(rtspUrl, "http://localhost:8090/" + identity
-						+ ".ffm");
+				ffserver.startFFmpeg(rtspUrl, "http://localhost:8090/"
+						+ identity + ".ffm");
 				// ffserver.startFFmpeg(rtspUrl);
 			}
 
@@ -159,7 +159,7 @@ public class Parser {
 			ffserver.start();
 
 			/* 注册一个新的ffmpeg用于新的流 */
-			ffserver.addFFmpeg(rtspUrl, "http://localhost:8090/" + identity
+			ffserver.startFFmpeg(rtspUrl, "http://localhost:8090/" + identity
 					+ ".ffm");
 			// ffserver.startFFmpeg(rtspUrl);
 		}
@@ -177,7 +177,6 @@ public class Parser {
 		}
 
 		ffserver.stopFFmpeg(rtspUrl);
-		ffserver.deleteFFmpeg(rtspUrl);
 
 		String str = rtspUrl.substring(rtspUrl.indexOf("rtsp://") + 7,
 				rtspUrl.lastIndexOf('/'));
@@ -216,7 +215,7 @@ public class Parser {
 			throw new IllegalArgumentException("Error rtsp url");
 		}
 
-		ffserver.startFFmpeg(rtspUrl);
+		addStream(rtspUrl);
 	}
 
 	public void parse() {

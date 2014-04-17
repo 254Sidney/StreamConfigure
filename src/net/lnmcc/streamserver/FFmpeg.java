@@ -1,17 +1,35 @@
 package net.lnmcc.streamserver;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-public class FFmpeg {
+public class FFmpeg implements Serializable {
+
+	private static final long serialVersionUID = 1L;
 	private String from;
 	private String to;
-	private Process ps = null;
-	private boolean running = false;
+	transient private Process ps = null;
+	transient private boolean running = false;
 
 	public FFmpeg(String from, String to) {
 		this.from = from;
 		this.to = to;
+	}
+
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+	}
+
+	private void readObject(ObjectInputStream in) throws IOException,
+			ClassNotFoundException {
+
+		in.defaultReadObject();
+		ps = null;
+		running = false;
 	}
 
 	public void start() {
