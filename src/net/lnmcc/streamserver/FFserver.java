@@ -52,6 +52,15 @@ public class FFserver {
 			ex.printStackTrace();
 		} catch (IOException ex) {
 			ex.printStackTrace();
+		} finally {
+			if (ois != null) {
+				try {
+					ois.close();
+					ois = null;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -78,6 +87,28 @@ public class FFserver {
 		return identity;
 	}
 
+	private void writeObj() {
+
+		ObjectOutputStream oos = null;
+		File ffmpegInfo = new File(ffmpegCfgPath);
+
+		try {
+			oos = new ObjectOutputStream(new FileOutputStream(ffmpegInfo));
+			oos.writeObject(ffmpegs);
+		} catch (FileNotFoundException ex) {
+			ex.printStackTrace();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			try {
+				oos.flush();
+				oos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	boolean startFFmpeg(String from, String to) {
 		synchronized (syncAD) {
 			String identity = getIdentity(from);
@@ -86,26 +117,7 @@ public class FFserver {
 
 			FFmpeg ffmpeg = new FFmpeg(from, to);
 			ffmpegs.put(identity, ffmpeg);
-
-			ObjectOutputStream oos = null;
-			File ffmpegInfo = new File(ffmpegCfgPath);
-
-			try {
-				oos = new ObjectOutputStream(new FileOutputStream(ffmpegInfo));
-				oos.writeObject(ffmpegs);
-			} catch (FileNotFoundException ex) {
-				ex.printStackTrace();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			} finally {
-				try {
-					oos.flush();
-					oos.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-
+			writeObj();
 			ffmpeg.start();
 
 			return true;
@@ -125,24 +137,7 @@ public class FFserver {
 
 			ffmpegs.remove(identity);
 
-			ObjectOutputStream oos = null;
-			File ffmpegInfo = new File(ffmpegCfgPath);
-
-			try {
-				oos = new ObjectOutputStream(new FileOutputStream(ffmpegInfo));
-				oos.writeObject(ffmpegs);
-			} catch (FileNotFoundException ex) {
-				ex.printStackTrace();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			} finally {
-				try {
-					oos.flush();
-					oos.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+			writeObj();
 
 			return true;
 		}

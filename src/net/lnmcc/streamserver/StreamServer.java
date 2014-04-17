@@ -73,20 +73,13 @@ public class StreamServer {
 		new ShutDownClear(streamServer);
 
 		streamServer.startFFserver();
-		streamServer.addStream(rtspUrl1);
+		//streamServer.addStream(rtspUrl1);
+		//streamServer.addStream(rtspUrl2);
 
 		try {
-			Thread.sleep(5 * 1000);
-			// streamServer.startStream(rtspUrl1);
-			// Thread.sleep(30 * 1000);
-			// streamServer.stopStream(rtspUrl1);
-			// Thread.sleep(5 * 1000);
-			// streamServer.deleteStream(rtspUrl1);
-			// Thread.sleep(5 * 1000);
-			// streamServer.addStream(rtspUrl2);
-			// streamServer.startStream(rtspUrl2);
-			// Thread.sleep(30 * 1000);
-			// streamServer.stopFFserver();
+			Thread.sleep(50 * 1000);
+			//streamServer.deleteStream(rtspUrl1);
+			streamServer.stopFFserver();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
