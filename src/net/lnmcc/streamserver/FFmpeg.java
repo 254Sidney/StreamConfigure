@@ -7,7 +7,7 @@ public class FFmpeg {
 	private String from;
 	private String to;
 	private Process ps = null;
-	private boolean needExit = false;
+	private boolean running = false;
 
 	public FFmpeg(String from, String to) {
 		this.from = from;
@@ -21,7 +21,7 @@ public class FFmpeg {
 				ps.destroy();
 				ps = null;
 			}
-			needExit = false;
+			running = true;
 
 			Thread t = new Thread(new Runnable() {
 				String[] cmd = new String[] { "ffmpeg", "-i", from, to };
@@ -29,7 +29,7 @@ public class FFmpeg {
 				@Override
 				public void run() {
 					try {
-						while (needExit == false) {
+						while (running == true) {
 							ps = Runtime.getRuntime().exec(cmd);
 							BufferedReader br = new BufferedReader(
 									new InputStreamReader(ps.getErrorStream()));
@@ -48,7 +48,7 @@ public class FFmpeg {
 					} catch (Exception e) {
 						e.printStackTrace();
 					} finally {
-						needExit = true;
+						running = false;
 
 						if (ps != null) {
 							ps.destroy();
@@ -59,7 +59,7 @@ public class FFmpeg {
 			});
 			t.start();
 
-			while (needExit == false && ps == null) {
+			while (running == true && ps == null) {
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException ex) {
@@ -71,7 +71,7 @@ public class FFmpeg {
 
 	public void stop() {
 		synchronized (this) {
-			needExit = true;
+			running = false;
 
 			if (ps != null) {
 				ps.destroy();
@@ -87,6 +87,11 @@ public class FFmpeg {
 		}
 	}
 
+	public boolean isRunning() {
+		synchronized (this) {
+			return running;
+		}
+	}
 	// public static void main(String[] args) {
 	// FFmpeg ffmpeg = new FFmpeg(
 	// "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp",

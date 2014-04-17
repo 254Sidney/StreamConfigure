@@ -5,29 +5,57 @@ public class StreamServer {
 	final private String ffCfgPath;
 	final private Parser parser;
 
-	public StreamServer(String ffCfgPath) {
+	public StreamServer(String ffCfgPath, String ffmpegCfgPath) {
 		this.ffCfgPath = ffCfgPath;
-		ffserver = FFserver.getFFserver(ffCfgPath);
+		ffserver = FFserver.getFFserver(ffCfgPath, ffmpegCfgPath);
 		parser = Parser.getParser(ffserver, ffCfgPath);
 	}
 
-	public void start() {
+	public void startFFserver() {
+		// FIXME: check the configure file
+		parser.parse();
 		ffserver.start();
 	}
 
-	public void stop() {
+	public void stopFFserver() {
 		ffserver.stop();
 	}
 
+	/**
+	 * 增加一个新的流，如果已经加过了就不要在加入配置文件，我会取rtsp流地址的ip:host作为该流的唯一标志。
+	 * 增加一个新的流会导致重启ffserver和所有已注册的ffmpeg。
+	 * ffmpeg的输出地址一定是http://localhost:8090/{identity}.ffm 。
+	 * 
+	 * @param rtspUrl
+	 *            rtsp的流地址 比如：
+	 *            rtsp://192.168.2.191:554/user=admin&password=admin
+	 *            &channel=1&stream=0.sdp
+	 * @return
+	 */
 	public void addStream(String rtspUrl) {
 		parser.parse();
 		parser.addStream(rtspUrl);
 	}
 
-	public void stopStream() {
-
+	/**
+	 * 停止一个流只是取消该流在ffmserver中的注册并关闭对应的ffmpeg。不会把ffserver.conf中对应的section删除。
+	 * 
+	 * @param rtspUrl
+	 */
+	public void stopStream(String rtspUrl) {
+		parser.stopStream(rtspUrl);
 	}
 
+	public void startStream(String rtspUrl) {
+		parser.startStream(rtspUrl);
+	}
+
+	/**
+	 * 删除一个流首先会停止这个流，然后把与该流相关的信息从ffserver.conf中删除。 这个方法会导致ffserver重启。
+	 * ffserver会自动重启他说有注册过的ffmpeg 。
+	 * 
+	 * @param rtspUrl
+	 */
 	public void deleteStream(String rtspUrl) {
 		parser.parse();
 		parser.deleteStream(rtspUrl);
@@ -36,28 +64,32 @@ public class StreamServer {
 	public static void main(String[] args) {
 		final String ffCfgPath = new String(
 				"/home/sijiewang/Projects/stream-media-test/ff.conf");
+		final String ffmpegCfgPath = new String(
+				"/home/sijiewang/Projects/stream-media-test/ffmpeg.conf");
 		final String rtspUrl1 = "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp";
 		final String rtspUrl2 = "rtsp://192.168.2.211:5554/tv.rtp";
 
-		StreamServer streamServer = new StreamServer(ffCfgPath);
+		StreamServer streamServer = new StreamServer(ffCfgPath, ffmpegCfgPath);
 		new ShutDownClear(streamServer);
 
-		streamServer.start();
-		streamServer.addStream(rtspUrl1);
+		streamServer.startFFserver();
+		//streamServer.addStream(rtspUrl1);
 
 		try {
-			Thread.sleep(30 * 1000);
-			streamServer.addStream(rtspUrl2);
-			Thread.sleep(30 * 1000);
-			streamServer.deleteStream(rtspUrl1);
-			Thread.sleep(30 * 1000);
-			streamServer.deleteStream(rtspUrl2);
-
-			// streamServer.start();
+			Thread.sleep(5 * 1000);
+			// streamServer.startStream(rtspUrl1);
+			// Thread.sleep(30 * 1000);
+			// streamServer.stopStream(rtspUrl1);
+			// Thread.sleep(5 * 1000);
+			// streamServer.deleteStream(rtspUrl1);
+			// Thread.sleep(5 * 1000);
+			// streamServer.addStream(rtspUrl2);
+			// streamServer.startStream(rtspUrl2);
+			// Thread.sleep(30 * 1000);
+			// streamServer.stopFFserver();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-
 	}
 }
 
@@ -75,7 +107,7 @@ class ShutDownClear {
 
 			@Override
 			public void run() {
-				sv.stop();
+				sv.stopFFserver();
 			}
 		}));
 	}

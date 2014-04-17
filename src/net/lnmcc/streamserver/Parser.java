@@ -137,8 +137,18 @@ public class Parser {
 		String str = rtspUrl.substring(rtspUrl.indexOf("rtsp://") + 7,
 				rtspUrl.lastIndexOf('/'));
 		String identity = str.replace('.', '-').replace(':', '_');
+
+		/* 对应的流信息已经在ffserver.conf中了 */
 		if (ffservercfg.isExist(identity)) {
-			System.out.println("Exist"); // FIXME
+			System.out.println("Exist");
+
+			/* 查询这个流是否已经在跑了 */
+			if (!ffserver.isExist(identity)) {
+				/* 注册一个新的ffmpeg用于新的流 */
+				ffserver.addFFmpeg(rtspUrl, "http://localhost:8090/" + identity
+						+ ".ffm");
+				// ffserver.startFFmpeg(rtspUrl);
+			}
 
 		} else {
 			buildFeedSection(identity);
@@ -147,10 +157,11 @@ public class Parser {
 			ffserver.stop();
 			writeCfg(ffCfgPath);
 			ffserver.start();
-			
+
 			/* 注册一个新的ffmpeg用于新的流 */
 			ffserver.addFFmpeg(rtspUrl, "http://localhost:8090/" + identity
 					+ ".ffm");
+			// ffserver.startFFmpeg(rtspUrl);
 		}
 	}
 
@@ -165,7 +176,8 @@ public class Parser {
 			throw new IllegalArgumentException("Error rtsp url");
 		}
 
-		stopStream(rtspUrl);
+		ffserver.stopFFmpeg(rtspUrl);
+		ffserver.deleteFFmpeg(rtspUrl);
 
 		String str = rtspUrl.substring(rtspUrl.indexOf("rtsp://") + 7,
 				rtspUrl.lastIndexOf('/'));
@@ -191,7 +203,20 @@ public class Parser {
 			throw new IllegalArgumentException("Error rtsp url");
 		}
 
-		ffserver.deleteFFmpeg(rtspUrl);
+		ffserver.stopFFmpeg(rtspUrl);
+	}
+
+	/**
+	 * 启动一个流，前提是ffserver.conf中对应的section，否则需要先addStream
+	 * 
+	 * @param rtspUrl
+	 */
+	public void startStream(String rtspUrl) {
+		if (!rtspUrl.startsWith("rtsp://")) {
+			throw new IllegalArgumentException("Error rtsp url");
+		}
+
+		ffserver.startFFmpeg(rtspUrl);
 	}
 
 	public void parse() {
@@ -204,7 +229,7 @@ public class Parser {
 
 			while ((line = reader.readLine()) != null) {
 				// skip comment line and space line
-				if (!line.startsWith(String.valueOf("#")) && !line.isEmpty()
+				if (!line.startsWith(String.valueOf("##")) && !line.isEmpty()
 						&& !line.matches("^\\s*\n$") && !line.matches("\\s*$"))
 					classify(line);
 			}
