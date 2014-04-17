@@ -117,13 +117,15 @@ public class FFserver {
 							System.out.println("Restarting ffserver ... ...");
 							Thread.sleep(1000);
 						}
-						
+
 						ps = null;
-						
+
 					} catch (Exception e) {
 						e.printStackTrace();
 					} finally {
-						if(ps != null) {
+						needExit = true;
+
+						if (ps != null) {
 							ps.destroy();
 							ps = null;
 						}
@@ -131,11 +133,11 @@ public class FFserver {
 				}
 			});
 			t.start();
-			
-			while(needExit == false && ps == null) {
-				try{
+
+			while (needExit == false && ps == null) {
+				try {
 					Thread.sleep(1000);
-				} catch(InterruptedException ex) {
+				} catch (InterruptedException ex) {
 					ex.printStackTrace();
 				}
 			}
@@ -147,18 +149,18 @@ public class FFserver {
 	 * 停止ffserver,同时也会停止所有已经注册的ffmpeg
 	 */
 	public void stop() {
-	
+
 		synchronized (syncSS) {
 			stopAllFFmpeg();
 			needExit = true;
 			if (ps != null) {
 				ps.destroy();
 			}
-			
-			while(ps != null) {
+
+			while (ps != null) {
 				try {
 					Thread.sleep(1000);
-				} catch(InterruptedException e) {
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}

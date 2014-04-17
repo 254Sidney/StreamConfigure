@@ -42,13 +42,30 @@ public class FFmpeg {
 							ps.waitFor();
 							Thread.sleep(1000);
 						}
+
+						ps = null;
+
 					} catch (Exception e) {
 						e.printStackTrace();
+					} finally {
+						needExit = true;
+
+						if (ps != null) {
+							ps.destroy();
+							ps = null;
+						}
 					}
-					ps = null;
 				}
 			});
 			t.start();
+
+			while (needExit == false && ps == null) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException ex) {
+					ex.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -59,20 +76,28 @@ public class FFmpeg {
 			if (ps != null) {
 				ps.destroy();
 			}
+
+			while (ps != null) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
-//	public static void main(String[] args) {
-//		FFmpeg ffmpeg = new FFmpeg(
-//				"rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp",
-//				"http://localhost:8090/192-168-2-191_554.ffm");
-//		ffmpeg.start();
-//		try {
-//			Thread.sleep(60 * 1000);
-//			ffmpeg.stop();
-//		} catch (Exception ex) {
-//			ex.printStackTrace();
-//		}
-//		System.out.println("Main exit");
-//	}
+	// public static void main(String[] args) {
+	// FFmpeg ffmpeg = new FFmpeg(
+	// "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp",
+	// "http://localhost:8090/192-168-2-191_554.ffm");
+	// ffmpeg.start();
+	// try {
+	// Thread.sleep(60 * 1000);
+	// ffmpeg.stop();
+	// } catch (Exception ex) {
+	// ex.printStackTrace();
+	// }
+	// System.out.println("Main exit");
+	// }
 }
