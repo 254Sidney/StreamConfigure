@@ -3,6 +3,7 @@ package net.lnmcc.streamserver;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -77,6 +78,23 @@ public class StreamServer extends HttpServlet {
 		parser.parse();
 		parser.deleteStream(rtspUrl);
 	}
+	
+	public String getAllStreams() {
+		StringBuilder sb = new StringBuilder();
+		List<String> rtsps = ffserver.getAllStreams();
+		
+		sb.append("{ \"urls\" : [");
+		
+		for(String str : rtsps) {
+			sb.append("\"");
+			sb.append(str);
+			sb.append("\",");
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		sb.append("] }");
+		
+		return sb.toString();
+	}
 
 	@Override
 	public void init() throws ServletException {
@@ -86,6 +104,7 @@ public class StreamServer extends HttpServlet {
 	@Override
 	public void destroy() {
 		System.out.println("Destroy");
+		stopFFserver();
 	}
 
 	@Override
@@ -101,9 +120,13 @@ public class StreamServer extends HttpServlet {
 			throws ServletException, IOException {
 
 		String newAddress = null;
+		String result = null;
 		
 		System.out.println("doPost ...");
 		req.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8");
+		resp.setContentType("application/json");
+		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
 				req.getInputStream()));
 		String jsonStr = "";
@@ -126,35 +149,24 @@ public class StreamServer extends HttpServlet {
 			
 			if(cmd.equalsIgnoreCase("add")) {
 				newAddress = addStream(param);
+				result = "{\"url\":" + "\"" + newAddress + "\""  + "}";
+				resp.getWriter().print(result);
+				
 			} else if (cmd.equalsIgnoreCase("delete")) {
 				deleteStream(param);
 			} else if(cmd.equalsIgnoreCase("stop")) {
 				stopStream(param);
 			} else if(cmd.equalsIgnoreCase("query")) {
-				//TODO
+				result = getAllStreams();
+				resp.getWriter().print(result);
 			}
 
 		} catch (JSONException e) {
 			e.printStackTrace();
-
-			resp.setContentType("text/html");
-			resp.getWriter().print("<html>");
-			resp.getWriter().print("head");
-			resp.getWriter().print("</head>");
-			resp.getWriter().print("body");
-			resp.getWriter().print("Json error");
-			resp.getWriter().print("</body>");
-			resp.getWriter().print("</html>");
+			result = "{\"url\":\"\"}";
+			resp.getWriter().print(result);
+			return;
 		}
-
-		resp.setContentType("text/html");
-		resp.getWriter().print("<html>");
-		resp.getWriter().print("head");
-		resp.getWriter().print("</head>");
-		resp.getWriter().print("body");
-		resp.getWriter().print("Json OK");
-		resp.getWriter().print("</body>");
-		resp.getWriter().print("</html>");
 
 	}
 	/*

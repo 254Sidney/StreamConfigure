@@ -9,8 +9,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FFserver {
@@ -143,6 +149,7 @@ public class FFserver {
 		}
 	}
 
+	
 	private void stopAllFFmpeg() {
 		synchronized (syncAD) {
 			Collection<FFmpeg> vals = ffmpegs.values();
@@ -161,6 +168,39 @@ public class FFserver {
 		}
 	}
 
+	public List<String> getAllStreams() {
+		List<String> list = new ArrayList<String>();
+		list.clear();
+		
+		InetAddress addr = null;
+		String ip = null;
+
+		try {
+			NetworkInterface ifr = NetworkInterface.getByName("eth0");
+			Enumeration<InetAddress> ei = ifr.getInetAddresses();
+			while (ei.hasMoreElements()) {
+				addr = ei.nextElement();
+				if (addr instanceof Inet4Address) {
+					ip = addr.getHostAddress().toString();
+					break;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		synchronized(syncAD) {
+			Collection<String> keys = ffmpegs.keySet();
+			for(String key : keys) {
+				String ret = new String("rtsp://" + ip + ":5554/" + key + ".rtp");
+				list.add(ret);
+			}
+		}
+		
+		return list;
+	}
+	
 	/**
 	 * 启动ffserver, 同时也会启动所有注册的ffmpeg
 	 */

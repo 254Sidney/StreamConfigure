@@ -126,8 +126,8 @@ public class Parser {
 	}
 
 	/**
-	 * 增加一个新的流，如果已经加过了就不要在加入配置文件，我会取rtsp流地址的ip:host作为该流的唯一标志。
-	 * 增加一个新的流会导致重启ffserver和所有已注册的ffmpeg。
+	 * 增加一个新的流，如果已经加过了就不要在加入配置文件，会取rtsp流地址的ip:host作为该流的唯一标志。
+	 * 增加一个新的流会导致重启ffserver和所有已注册的ffmpeg重启。
 	 * ffmpeg的输出地址一定是http://localhost:8090/{identity}.ffm 。
 	 * 
 	 * @param rtspUrl
