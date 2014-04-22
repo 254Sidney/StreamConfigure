@@ -1,10 +1,21 @@
 package net.lnmcc.streamserver;
 
-public class StreamServer {
-	final private FFserver ffserver;
-	final private String ffCfgPath;
-	final private Parser parser;
+import java.io.IOException;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class StreamServer extends HttpServlet {
+	private FFserver ffserver = null;
+	private String ffCfgPath = null;
+	private Parser parser = null;
+
+	public StreamServer() {
+		
+	}
+	
 	public StreamServer(String ffCfgPath, String ffmpegCfgPath) {
 		this.ffCfgPath = ffCfgPath;
 		ffserver = FFserver.getFFserver(ffCfgPath, ffmpegCfgPath);
@@ -38,7 +49,7 @@ public class StreamServer {
 	}
 
 	/**
-	 * 停止一个流只是取消该流在ffmserver中的注册并关闭对应的ffmpeg。不会把ffserver.conf中对应的section删除。
+	 * 停止一个流只是取消该流在ffserver中的注册并关闭对应的ffmpeg。不会把ffserver.conf中对应的section删除。
 	 * 
 	 * @param rtspUrl
 	 */
@@ -60,7 +71,37 @@ public class StreamServer {
 		parser.parse();
 		parser.deleteStream(rtspUrl);
 	}
+	
+	@Override
+	public void init() throws ServletException {
+		System.out.println("Init ...");
+	}
 
+	@Override
+	public void destroy() {
+		System.out.println("Destroy");
+	}
+	
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+	    
+        resp.setContentType("text/html");
+        resp.getWriter().print("<html>");
+        resp.getWriter().print("head");
+        resp.getWriter().print("</head>");
+        resp.getWriter().print("body");
+        resp.getWriter().print("Hello World");
+        resp.getWriter().print("</body>");
+        resp.getWriter().print("</html>");
+	}
+	
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		
+	}
+/*
 	public static void main(String[] args) {
 		final String ffCfgPath = new String(
 				"/home/sijiewang/Projects/stream-media-test/ff.conf");
@@ -104,4 +145,5 @@ class ShutDownClear {
 			}
 		}));
 	}
+	*/
 }
