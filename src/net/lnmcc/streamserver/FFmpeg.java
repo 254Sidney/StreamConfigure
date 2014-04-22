@@ -42,7 +42,7 @@ public class FFmpeg implements Serializable {
 			running = true;
 
 			Thread t = new Thread(new Runnable() {
-				String[] cmd = new String[] { "ffmpeg", "-i", from, to };
+				String[] cmd = new String[] { "/usr/local/bin/ffmpeg", "-i", from, to };
 
 				@Override
 				public void run() {

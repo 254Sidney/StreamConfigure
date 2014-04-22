@@ -1,25 +1,31 @@
 package net.lnmcc.streamserver;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.sf.json.JSONException;
+import net.sf.json.JSONObject;
+
 public class StreamServer extends HttpServlet {
-	private FFserver ffserver = null;
-	private String ffCfgPath = null;
+
+	final private String ffCfgPath = new String(
+			"/home/sijiewang/Projects/stream-media-test/ff.conf");
+	final private String ffmpegCfgPath = new String(
+			"/home/sijiewang/Projects/stream-media-test/ffmpeg.conf");
 	private Parser parser = null;
+	private FFserver ffserver = null;
 
 	public StreamServer() {
-		
-	}
-	
-	public StreamServer(String ffCfgPath, String ffmpegCfgPath) {
-		this.ffCfgPath = ffCfgPath;
 		ffserver = FFserver.getFFserver(ffCfgPath, ffmpegCfgPath);
 		parser = Parser.getParser(ffserver, ffCfgPath);
+
+		ffserver.start();
 	}
 
 	public void startFFserver() {
@@ -43,9 +49,9 @@ public class StreamServer extends HttpServlet {
 	 *            &channel=1&stream=0.sdp
 	 * @return
 	 */
-	public void addStream(String rtspUrl) {
+	public String addStream(String rtspUrl) {
 		parser.parse();
-		parser.addStream(rtspUrl);
+		return parser.addStream(rtspUrl);
 	}
 
 	/**
@@ -71,7 +77,7 @@ public class StreamServer extends HttpServlet {
 		parser.parse();
 		parser.deleteStream(rtspUrl);
 	}
-	
+
 	@Override
 	public void init() throws ServletException {
 		System.out.println("Init ...");
@@ -81,69 +87,102 @@ public class StreamServer extends HttpServlet {
 	public void destroy() {
 		System.out.println("Destroy");
 	}
-	
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-	    
-        resp.setContentType("text/html");
-        resp.getWriter().print("<html>");
-        resp.getWriter().print("head");
-        resp.getWriter().print("</head>");
-        resp.getWriter().print("body");
-        resp.getWriter().print("Hello World");
-        resp.getWriter().print("</body>");
-        resp.getWriter().print("</html>");
+
+		System.out.println("doGet ...");
+		doPost(req, resp);
 	}
-	
+
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+
+		String newAddress = null;
 		
-	}
-/*
-	public static void main(String[] args) {
-		final String ffCfgPath = new String(
-				"/home/sijiewang/Projects/stream-media-test/ff.conf");
-		final String ffmpegCfgPath = new String(
-				"/home/sijiewang/Projects/stream-media-test/ffmpeg.conf");
-		final String rtspUrl1 = "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp";
-		final String rtspUrl2 = "rtsp://192.168.2.211:5554/tv.rtp";
+		System.out.println("doPost ...");
+		req.setCharacterEncoding("UTF-8");
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				req.getInputStream()));
+		String jsonStr = "";
+		String line;
+		while ((line = reader.readLine()) != null) {
+			jsonStr += line;
+		}
+		System.out.println(jsonStr);
 
-		StreamServer streamServer = new StreamServer(ffCfgPath, ffmpegCfgPath);
-		new ShutDownClear(streamServer);
-
-		streamServer.startFFserver();
-		//streamServer.addStream(rtspUrl1);
-		//streamServer.addStream(rtspUrl2);
+		JSONObject obj;
+		String cmd;
+		String param;
 
 		try {
-			Thread.sleep(50 * 1000);
-			//streamServer.deleteStream(rtspUrl1);
-			streamServer.stopFFserver();
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-	}
-}
-
-class ShutDownClear {
-	private StreamServer sv;
-
-	public ShutDownClear(StreamServer sv) {
-		this.sv = sv;
-		doClear();
-	}
-
-	private void doClear() {
-		Runtime r = Runtime.getRuntime();
-		r.addShutdownHook(new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				sv.stopFFserver();
+			obj = JSONObject.fromObject(jsonStr);
+			cmd = obj.getString("command");
+			param = obj.getString("param");
+			System.out.println("command: " + cmd);
+			System.out.println("param: " + param);
+			
+			if(cmd.equalsIgnoreCase("add")) {
+				newAddress = addStream(param);
+			} else if (cmd.equalsIgnoreCase("delete")) {
+				deleteStream(param);
+			} else if(cmd.equalsIgnoreCase("stop")) {
+				stopStream(param);
+			} else if(cmd.equalsIgnoreCase("query")) {
+				//TODO
 			}
-		}));
+
+		} catch (JSONException e) {
+			e.printStackTrace();
+
+			resp.setContentType("text/html");
+			resp.getWriter().print("<html>");
+			resp.getWriter().print("head");
+			resp.getWriter().print("</head>");
+			resp.getWriter().print("body");
+			resp.getWriter().print("Json error");
+			resp.getWriter().print("</body>");
+			resp.getWriter().print("</html>");
+		}
+
+		resp.setContentType("text/html");
+		resp.getWriter().print("<html>");
+		resp.getWriter().print("head");
+		resp.getWriter().print("</head>");
+		resp.getWriter().print("body");
+		resp.getWriter().print("Json OK");
+		resp.getWriter().print("</body>");
+		resp.getWriter().print("</html>");
+
 	}
-	*/
+	/*
+	 * public static void main(String[] args) { final String ffCfgPath = new
+	 * String( "/home/sijiewang/Projects/stream-media-test/ff.conf"); final
+	 * String ffmpegCfgPath = new String(
+	 * "/home/sijiewang/Projects/stream-media-test/ffmpeg.conf"); final String
+	 * rtspUrl1 =
+	 * "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp"
+	 * ; final String rtspUrl2 = "rtsp://192.168.2.211:5554/tv.rtp";
+	 * 
+	 * StreamServer streamServer = new StreamServer(ffCfgPath, ffmpegCfgPath);
+	 * new ShutDownClear(streamServer);
+	 * 
+	 * streamServer.startFFserver(); //streamServer.addStream(rtspUrl1);
+	 * //streamServer.addStream(rtspUrl2);
+	 * 
+	 * try { Thread.sleep(50 * 1000); //streamServer.deleteStream(rtspUrl1);
+	 * streamServer.stopFFserver(); } catch (Exception ex) {
+	 * ex.printStackTrace(); } } }
+	 * 
+	 * class ShutDownClear { private StreamServer sv;
+	 * 
+	 * public ShutDownClear(StreamServer sv) { this.sv = sv; doClear(); }
+	 * 
+	 * private void doClear() { Runtime r = Runtime.getRuntime();
+	 * r.addShutdownHook(new Thread(new Runnable() {
+	 * 
+	 * @Override public void run() { sv.stopFFserver(); } })); }
+	 */
 }

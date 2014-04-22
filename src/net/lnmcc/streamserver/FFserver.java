@@ -174,7 +174,7 @@ public class FFserver {
 			needExit = false;
 
 			Thread t = new Thread(new Runnable() {
-				String[] cmd = new String[] { "ffserver", "-f", cfgPath };
+				String[] cmd = new String[] { "/usr/local/bin/ffserver", "-f", cfgPath };
 
 				@Override
 				public void run() {

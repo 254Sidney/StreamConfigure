@@ -7,6 +7,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+
+import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
 
 public class Parser {
 	private String ffCfgPath;
@@ -127,9 +134,10 @@ public class Parser {
 	 *            rtsp的流地址 比如：
 	 *            rtsp://192.168.2.191:554/user=admin&password=admin
 	 *            &channel=1&stream=0.sdp
-	 * @return
+	 * @return String 转换后的流地址
 	 */
-	public void addStream(String rtspUrl) {
+	public String addStream(String rtspUrl) {
+
 		if (!rtspUrl.startsWith("rtsp://")) {
 			throw new IllegalArgumentException("Error rtsp url");
 		}
@@ -163,6 +171,30 @@ public class Parser {
 					+ ".ffm");
 			// ffserver.startFFmpeg(rtspUrl);
 		}
+
+		String result = null;
+		InetAddress addr = null;
+		String ip = null;
+
+		try {
+			NetworkInterface ifr = NetworkInterface.getByName("eth0");
+			Enumeration<InetAddress> ei = ifr.getInetAddresses();
+			while (ei.hasMoreElements()) {
+				addr = ei.nextElement();
+				if (addr instanceof Inet4Address) {
+					ip = addr.getHostAddress().toString();
+					break;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		result = new String("rtsp://" + ip + ":5554/" + identity + ".rtp");
+		System.out.println("New rtsp address: " + result);
+
+		return result;
 	}
 
 	/**
