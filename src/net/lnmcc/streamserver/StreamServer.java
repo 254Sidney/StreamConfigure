@@ -16,9 +16,9 @@ import net.sf.json.JSONObject;
 public class StreamServer extends HttpServlet {
 
 	final private String ffCfgPath = new String(
-			"/home/sijiewang/Projects/stream-media-test/ff.conf");
+			"/home/danoo/stream-media/ffserver.conf");
 	final private String ffmpegCfgPath = new String(
-			"/home/sijiewang/Projects/stream-media-test/ffmpeg.conf");
+			"/home/danoo/stream-media/ffmpeg.conf");
 	private Parser parser = null;
 	private FFserver ffserver = null;
 
@@ -70,7 +70,7 @@ public class StreamServer extends HttpServlet {
 
 	/**
 	 * 删除一个流首先会停止这个流，然后把与该流相关的信息从ffserver.conf中删除。 这个方法会导致ffserver重启。
-	 * ffserver会自动重启他说有注册过的ffmpeg 。
+	 * ffserver会自动重启他所有注册过的ffmpeg 。
 	 * 
 	 * @param rtspUrl
 	 */
@@ -78,21 +78,26 @@ public class StreamServer extends HttpServlet {
 		parser.parse();
 		parser.deleteStream(rtspUrl);
 	}
-	
+
+	/**
+	 * 获取所有正在流或的流媒体地址
+	 * 
+	 * @return 流地址，JSON字符串
+	 */
 	public String getAllStreams() {
 		StringBuilder sb = new StringBuilder();
 		List<String> rtsps = ffserver.getAllStreams();
-		
+
 		sb.append("{ \"urls\" : [");
-		
-		for(String str : rtsps) {
+
+		for (String str : rtsps) {
 			sb.append("\"");
 			sb.append(str);
 			sb.append("\",");
 		}
 		sb.deleteCharAt(sb.length() - 1);
 		sb.append("] }");
-		
+
 		return sb.toString();
 	}
 
@@ -121,12 +126,12 @@ public class StreamServer extends HttpServlet {
 
 		String newAddress = null;
 		String result = null;
-		
+
 		System.out.println("doPost ...");
 		req.setCharacterEncoding("UTF-8");
 		resp.setCharacterEncoding("UTF-8");
 		resp.setContentType("application/json");
-		
+
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
 				req.getInputStream()));
 		String jsonStr = "";
@@ -146,17 +151,17 @@ public class StreamServer extends HttpServlet {
 			param = obj.getString("param");
 			System.out.println("command: " + cmd);
 			System.out.println("param: " + param);
-			
-			if(cmd.equalsIgnoreCase("add")) {
+
+			if (cmd.equalsIgnoreCase("add")) {
 				newAddress = addStream(param);
-				result = "{\"url\":" + "\"" + newAddress + "\""  + "}";
+				result = "{\"url\":" + "\"" + newAddress + "\"" + "}";
 				resp.getWriter().print(result);
-				
+
 			} else if (cmd.equalsIgnoreCase("delete")) {
 				deleteStream(param);
-			} else if(cmd.equalsIgnoreCase("stop")) {
+			} else if (cmd.equalsIgnoreCase("stop")) {
 				stopStream(param);
-			} else if(cmd.equalsIgnoreCase("query")) {
+			} else if (cmd.equalsIgnoreCase("query")) {
 				result = getAllStreams();
 				resp.getWriter().print(result);
 			}
