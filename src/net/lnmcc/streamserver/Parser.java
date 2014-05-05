@@ -10,10 +10,7 @@ import java.io.PrintWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.util.Enumeration;
-
-import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
 
 public class Parser {
 	private String ffCfgPath;

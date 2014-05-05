@@ -221,6 +221,8 @@ public class FFserver {
 					try {
 						while (needExit == false) {
 							ps = Runtime.getRuntime().exec(cmd);
+							if(ps == null)
+								continue;
 							BufferedReader br = new BufferedReader(
 									new InputStreamReader(ps.getErrorStream()));
 							String line;

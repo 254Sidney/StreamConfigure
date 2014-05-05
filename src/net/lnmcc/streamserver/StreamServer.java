@@ -5,9 +5,9 @@ import java.util.List;
 public class StreamServer {
 
 	final private String ffCfgPath = new String(
-			"/home/sijiewang/Projects/stream-media-test/ff.conf");
+			"/home/danoo/stream-media/ffserver.conf");
 	final private String ffmpegCfgPath = new String(
-			"/home/sijiewang/Projects/stream-media-test/ffmpeg.conf");
+			"/home/danoo/stream-media/ffmpeg.conf");
 	private Parser parser = null;
 	private FFserver ffserver = null;
 
@@ -15,7 +15,7 @@ public class StreamServer {
 		ffserver = FFserver.getFFserver(ffCfgPath, ffmpegCfgPath);
 		parser = Parser.getParser(ffserver, ffCfgPath);
 
-		ffserver.start();
+		//ffserver.start();
 	}
 
 	public void startFFserver() {
@@ -36,12 +36,18 @@ public class StreamServer {
 	 * @param rtspUrl
 	 *            rtsp的流地址 比如：
 	 *            rtsp://192.168.2.191:554/user=admin&password=admin
-	 *            &channel=1&stream=0.sdp
+	 *            &channel=1&stream=0.sdp 
+	 *           特殊的：如果要启用一个本机的视频采集卡捕捉设备，请给参数TVCard
 	 * @param audio
 	 *            是否有声音
 	 * @return 输出流地址
 	 */
 	public String addStream(String rtspUrl, boolean audio) {
+		//FIXME:特殊的，如果是本机视频采集卡的话就伪造一个rtsp地址，只是为了统一而已
+		if(rtspUrl.equals("TVCard")) {
+			rtspUrl = "rtsp://256.256.256.256:256/TVCardTC4000SD"; //Magic string
+		}
+		
 		parser.parse();
 		return parser.addStream(rtspUrl, audio);
 	}
@@ -88,24 +94,23 @@ public class StreamServer {
 
 		return sb.toString();
 	}
-
+/*
 	public static void main(String[] args) {
-		final String ffCfgPath = new String(
-				"/home/sijiewang/Projects/stream-media-test/ff.conf");
-		final String ffmpegCfgPath = new String(
-				"/home/sijiewang/Projects/stream-media-test/ffmpeg.conf");
+
 		final String rtspUrl1 = "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp";
-		final String rtspUrl2 = "rtsp://192.168.2.211:5554/tv.rtp";
+		final String rtspUrl2 = "rtsp://192.168.2.160:8554/proxyStream";
+		final String rtspUrl3 = "TVCard";
 
 		StreamServer streamServer = new StreamServer();
 		new ShutDownClear(streamServer);
 
 		streamServer.startFFserver();
-		// streamServer.addStream(rtspUrl1);
-		// streamServer.addStream(rtspUrl2);
 
 		try {
-			Thread.sleep(50 * 1000); // streamServer.deleteStream(rtspUrl1);
+			//Thread.sleep(5 * 1000);
+			streamServer.addStream(rtspUrl2, true);
+			Thread.sleep(30 * 1000);
+			//streamServer.deleteStream(rtspUrl2);
 			streamServer.stopFFserver();
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -131,5 +136,5 @@ class ShutDownClear {
 			}
 		}));
 	}
-
+*/
 }

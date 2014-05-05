@@ -22,7 +22,7 @@ public class StreamState implements State {
 		if (line.startsWith(String.valueOf("<Stream"))) {
 			stream = new Stream();
 			String name = getName(line);
-			parserCfg.addStream(name, stream);
+			parserCfg.addStreamSection(name, stream);
 		} else if (line.startsWith(String.valueOf("</Stream"))) {
 			parserCfg.setState(parserCfg.getCommonState());
 			stream = null;

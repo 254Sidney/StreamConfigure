@@ -10,8 +10,8 @@ import java.io.Serializable;
 public class FFmpeg implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private String from;
-	private String to;
+	private final String from;
+	private final String to;
 	transient private Process ps = null;
 	transient private boolean running = false;
 
@@ -42,10 +42,20 @@ public class FFmpeg implements Serializable {
 			running = true;
 
 			Thread t = new Thread(new Runnable() {
-				String[] cmd = new String[] { "/usr/local/bin/ffmpeg", "-i", from, to };
 
 				@Override
 				public void run() {
+
+					String[] cmd;
+					if (from.endsWith("TVCardTC4000SD")) {
+						cmd = new String[] { "/usr/local/bin/ffmpeg", "-deinterlace",
+								 "-f", "video4linux", "-i",
+								"/dev/pci_tv", "-f", "alsa", "-i", "hw:1,0", to };
+					} else {
+						cmd = new String[] { "/usr/local/bin/ffmpeg", "-deinterlace",
+								 "-i", from, to };
+					}
+
 					try {
 						while (running == true) {
 							ps = Runtime.getRuntime().exec(cmd);

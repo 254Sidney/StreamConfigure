@@ -173,7 +173,7 @@ public class FFserverCfg {
 		stream.addItem("AVOptionVideo qmax ", "51");
 		stream.addItem("AVOptionVideo qdiff ", "4");
 		stream.addItem("AVOptionVideo flags ", "+global_header");
-		stream.addItem("PixelFormat ", "yuv420p");
+		//stream.addItem("PixelFormat ", "yuv420p");
 
 		if (audio) {
 			stream.addItem("AudioCodec ", "libmp3lame");

@@ -21,7 +21,7 @@ public class FeedState implements State {
 		if (line.startsWith(String.valueOf("<Feed"))) {
 			String name = getName(line);
 			feed = new Feed();
-			parsercfg.addFeed(name, feed);
+			parsercfg.addFeedSection(name, feed);
 		} else if (line.startsWith(String.valueOf("</Feed"))) {
 			parsercfg.setState(parsercfg.getCommonState());
 			feed = null;
