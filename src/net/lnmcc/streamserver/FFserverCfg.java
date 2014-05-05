@@ -157,23 +157,32 @@ public class FFserverCfg {
 		addFeedSection(name + ".ffm", feed);
 	}
 
-	void buildStreamSection(String name) {
+	void buildStreamSection(String name, boolean audio) {
 		Stream stream = new Stream();
-		stream.addItem("Feed ", name + ".ffm");
 		stream.addItem("Format ", "rtp");
+		stream.addItem("Feed ", name + ".ffm");
+		stream.addItem("VideoCodec ", "libx264");
 		stream.addItem("VideoFrameRate ", "24");
-		stream.addItem("VideoBitRate ", "1000");
+		stream.addItem("VideoBitRate ", "2000k");
+		stream.addItem("VideoBufferSize ", "10240");
 		stream.addItem("VideoSize ", "720x480");
-		stream.addItem("VideoBitRateTolerance ", "1000");
-		stream.addItem("VideoGopSize ", "12");
-		stream.addItem("StartSendOnKey ", null);
-		stream.addItem("VideoQMin ", "3");
-		stream.addItem("VideoQMax ", "31");
-		stream.addItem("AVOptionVideo flags ", "+global_header");
-		stream.addItem("AVOptionVideo qmain ", "3");
-		stream.addItem("AVOptionVideo qmax ", "31");
+		stream.addItem("AVOptionVideo crf ", "18");
+		stream.addItem("AVOptionVideo preset ", "ultrafast");
+		stream.addItem("AVOptionVideo flags ", "+loop");
+		stream.addItem("AVOptionVideo qmin ", "10");
+		stream.addItem("AVOptionVideo qmax ", "51");
 		stream.addItem("AVOptionVideo qdiff ", "4");
-		stream.addItem("NoAudio ", null);
+		stream.addItem("AVOptionVideo flags ", "+global_header");
+		stream.addItem("PixelFormat ", "yuv420p");
+
+		if (audio) {
+			stream.addItem("AudioCodec ", "libmp3lame");
+			stream.addItem("AudioBitRate ", "512k");
+			stream.addItem("AudioChannels ", "2");
+			stream.addItem("AVOptionAudio flags ", "+global_header");
+		} else {
+			stream.addItem("NoAudio ", null);
+		}
 		addStreamSection(name + ".rtp", stream);
 	}
 

@@ -1,24 +1,13 @@
 package net.lnmcc.streamserver;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.List;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
-
-public class StreamServer extends HttpServlet {
+public class StreamServer {
 
 	final private String ffCfgPath = new String(
-			"/home/danoo/stream-media/ffserver.conf");
+			"/home/sijiewang/Projects/stream-media-test/ff.conf");
 	final private String ffmpegCfgPath = new String(
-			"/home/danoo/stream-media/ffmpeg.conf");
+			"/home/sijiewang/Projects/stream-media-test/ffmpeg.conf");
 	private Parser parser = null;
 	private FFserver ffserver = null;
 
@@ -48,11 +37,13 @@ public class StreamServer extends HttpServlet {
 	 *            rtsp的流地址 比如：
 	 *            rtsp://192.168.2.191:554/user=admin&password=admin
 	 *            &channel=1&stream=0.sdp
-	 * @return
+	 * @param audio
+	 *            是否有声音
+	 * @return 输出流地址
 	 */
-	public String addStream(String rtspUrl) {
+	public String addStream(String rtspUrl, boolean audio) {
 		parser.parse();
-		return parser.addStream(rtspUrl);
+		return parser.addStream(rtspUrl, audio);
 	}
 
 	/**
@@ -60,14 +51,11 @@ public class StreamServer extends HttpServlet {
 	 * 
 	 * @param rtspUrl
 	 */
-	public void stopStream(String rtspUrl) {
-		parser.stopStream(rtspUrl);
-	}
-
-	public void startStream(String rtspUrl) {
-		parser.startStream(rtspUrl);
-	}
-
+	/*
+	 * public void stopStream(String rtspUrl) { parser.stopStream(rtspUrl); }
+	 * 
+	 * public void startStream(String rtspUrl) { parser.startStream(rtspUrl); }
+	 */
 	/**
 	 * 删除一个流首先会停止这个流，然后把与该流相关的信息从ffserver.conf中删除。 这个方法会导致ffserver重启。
 	 * ffserver会自动重启他所有注册过的ffmpeg 。
@@ -101,105 +89,47 @@ public class StreamServer extends HttpServlet {
 		return sb.toString();
 	}
 
-	@Override
-	public void init() throws ServletException {
-		System.out.println("Init ...");
-	}
+	public static void main(String[] args) {
+		final String ffCfgPath = new String(
+				"/home/sijiewang/Projects/stream-media-test/ff.conf");
+		final String ffmpegCfgPath = new String(
+				"/home/sijiewang/Projects/stream-media-test/ffmpeg.conf");
+		final String rtspUrl1 = "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp";
+		final String rtspUrl2 = "rtsp://192.168.2.211:5554/tv.rtp";
 
-	@Override
-	public void destroy() {
-		System.out.println("Destroy");
-		stopFFserver();
-	}
+		StreamServer streamServer = new StreamServer();
+		new ShutDownClear(streamServer);
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-
-		System.out.println("doGet ...");
-		doPost(req, resp);
-	}
-
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-
-		String newAddress = null;
-		String result = null;
-
-		System.out.println("doPost ...");
-		req.setCharacterEncoding("UTF-8");
-		resp.setCharacterEncoding("UTF-8");
-		resp.setContentType("application/json");
-
-		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				req.getInputStream()));
-		String jsonStr = "";
-		String line;
-		while ((line = reader.readLine()) != null) {
-			jsonStr += line;
-		}
-		System.out.println(jsonStr);
-
-		JSONObject obj;
-		String cmd;
-		String param;
+		streamServer.startFFserver();
+		// streamServer.addStream(rtspUrl1);
+		// streamServer.addStream(rtspUrl2);
 
 		try {
-			obj = JSONObject.fromObject(jsonStr);
-			cmd = obj.getString("command");
-			param = obj.getString("param");
-			System.out.println("command: " + cmd);
-			System.out.println("param: " + param);
-
-			if (cmd.equalsIgnoreCase("add")) {
-				newAddress = addStream(param);
-				result = "{\"url\":" + "\"" + newAddress + "\"" + "}";
-				resp.getWriter().print(result);
-
-			} else if (cmd.equalsIgnoreCase("delete")) {
-				deleteStream(param);
-			} else if (cmd.equalsIgnoreCase("stop")) {
-				stopStream(param);
-			} else if (cmd.equalsIgnoreCase("query")) {
-				result = getAllStreams();
-				resp.getWriter().print(result);
-			}
-
-		} catch (JSONException e) {
-			e.printStackTrace();
-			result = "{\"url\":\"\"}";
-			resp.getWriter().print(result);
-			return;
+			Thread.sleep(50 * 1000); // streamServer.deleteStream(rtspUrl1);
+			streamServer.stopFFserver();
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
-
 	}
-	/*
-	 * public static void main(String[] args) { final String ffCfgPath = new
-	 * String( "/home/sijiewang/Projects/stream-media-test/ff.conf"); final
-	 * String ffmpegCfgPath = new String(
-	 * "/home/sijiewang/Projects/stream-media-test/ffmpeg.conf"); final String
-	 * rtspUrl1 =
-	 * "rtsp://192.168.2.191:554/user=admin&password=admin&channel=1&stream=0.sdp"
-	 * ; final String rtspUrl2 = "rtsp://192.168.2.211:5554/tv.rtp";
-	 * 
-	 * StreamServer streamServer = new StreamServer(ffCfgPath, ffmpegCfgPath);
-	 * new ShutDownClear(streamServer);
-	 * 
-	 * streamServer.startFFserver(); //streamServer.addStream(rtspUrl1);
-	 * //streamServer.addStream(rtspUrl2);
-	 * 
-	 * try { Thread.sleep(50 * 1000); //streamServer.deleteStream(rtspUrl1);
-	 * streamServer.stopFFserver(); } catch (Exception ex) {
-	 * ex.printStackTrace(); } } }
-	 * 
-	 * class ShutDownClear { private StreamServer sv;
-	 * 
-	 * public ShutDownClear(StreamServer sv) { this.sv = sv; doClear(); }
-	 * 
-	 * private void doClear() { Runtime r = Runtime.getRuntime();
-	 * r.addShutdownHook(new Thread(new Runnable() {
-	 * 
-	 * @Override public void run() { sv.stopFFserver(); } })); }
-	 */
+}
+
+class ShutDownClear {
+	private StreamServer sv;
+
+	public ShutDownClear(StreamServer sv) {
+		this.sv = sv;
+		doClear();
+	}
+
+	private void doClear() {
+		Runtime r = Runtime.getRuntime();
+		r.addShutdownHook(new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				sv.stopFFserver();
+			}
+		}));
+	}
+
 }

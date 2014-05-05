@@ -75,11 +75,11 @@ public class Parser {
 		ffservercfg.addCommonItem(key, val);
 	}
 
-	void addFeed(String name, Feed feed) {
+	void addFeedSection(String name, Feed feed) {
 		ffservercfg.addFeedSection(name, feed);
 	}
 
-	void addStream(String name, Stream stream) {
+	void addStreamSection(String name, Stream stream) {
 		ffservercfg.addStreamSection(name, stream);
 	}
 
@@ -87,8 +87,8 @@ public class Parser {
 		ffservercfg.buildFeedSection(name);
 	}
 
-	void buildStreamSection(String name) {
-		ffservercfg.buildStreamSection(name);
+	void buildStreamSection(String name, boolean audio) {
+		ffservercfg.buildStreamSection(name, audio);
 	}
 
 	void classify(String line) {
@@ -134,9 +134,11 @@ public class Parser {
 	 *            rtsp的流地址 比如：
 	 *            rtsp://192.168.2.191:554/user=admin&password=admin
 	 *            &channel=1&stream=0.sdp
+	 * @param audio
+	 *            是否有声音
 	 * @return String 转换后的流地址
 	 */
-	public String addStream(String rtspUrl) {
+	public String addStream(String rtspUrl, boolean audio) {
 
 		if (!rtspUrl.startsWith("rtsp://")) {
 			throw new IllegalArgumentException("Error rtsp url");
@@ -160,7 +162,7 @@ public class Parser {
 
 		} else {
 			buildFeedSection(identity);
-			buildStreamSection(identity);
+			buildStreamSection(identity, audio);
 			/* Restart ffserver, use new configure file */
 			ffserver.stop();
 			writeCfg(ffCfgPath);
@@ -242,6 +244,7 @@ public class Parser {
 	 * 
 	 * @param rtspUrl
 	 */
+	/*
 	public void startStream(String rtspUrl) {
 		if (!rtspUrl.startsWith("rtsp://")) {
 			throw new IllegalArgumentException("Error rtsp url");
@@ -249,7 +252,7 @@ public class Parser {
 
 		addStream(rtspUrl);
 	}
-
+	*/
 	public void parse() {
 		ffCfgFile = new File(ffCfgPath);
 		BufferedReader reader = null;
